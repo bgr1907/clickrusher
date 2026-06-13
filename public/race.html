@@ -631,7 +631,14 @@ function updateCountdown(){
   if(!S || !S.startAt) return;
   const left = Math.max(0, Math.ceil((S.startAt - Date.now()) / 1000));
   $('countdownNum').textContent = left || 'GİT!';
-  if(left===0) $('countdownSub').textContent='';
+  if(left===0){
+    $('countdownSub').textContent='';
+    // SSE gecikmesine bakmaksızın hemen başlat — herkes aynı anda tıklamaya başlasın
+    if(S.status==='countdown'){
+      S.status='active';
+      renderAll();
+    }
+  }
 }
 
 function statusText(){
