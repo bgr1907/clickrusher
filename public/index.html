@@ -604,6 +604,115 @@ footer{
   color:var(--chalk-dim);font-size:14px;font-weight:700;letter-spacing:.06em;
 }
 .wiz-back-btn{font-size:13px;font-weight:700;color:var(--chalk-dim);padding:4px 8px;letter-spacing:.06em}
+
+/* ============ CHAT ============ */
+.battle-chat-wrap{display:flex;flex-direction:column;gap:14px}
+.battle-col{min-width:0}
+
+.chat-col{
+  background:var(--panel);border:1px solid var(--bord2);border-radius:16px;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(0,200,255,.06);
+}
+.chat-head{
+  padding:10px 14px;border-bottom:1px solid var(--bord);
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:var(--cyan);text-shadow:0 0 8px rgba(0,200,255,.3);
+  flex-shrink:0;
+}
+.chat-close-btn{font-size:20px;line-height:1;color:var(--chalk-dim);padding:2px 4px;display:none}
+
+.chat-msgs{
+  flex:1;overflow-y:auto;padding:10px;
+  display:flex;flex-direction:column;gap:6px;
+  min-height:160px;
+}
+.chat-msgs::-webkit-scrollbar{width:3px}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:2px}
+
+.chat-msg{display:flex;flex-direction:column;gap:2px;max-width:88%}
+.chat-msg.me{align-self:flex-end;align-items:flex-end}
+.chat-nick{font-family:var(--mono);font-size:10px;color:var(--chalk-dim);padding:0 4px}
+.chat-msg.me .chat-nick{color:var(--cyan)}
+.chat-bubble{
+  font-size:13px;padding:6px 10px;border-radius:10px;line-height:1.4;
+  background:rgba(255,255,255,.06);border:1px solid var(--bord);
+  color:var(--chalk);word-break:break-word;
+}
+.chat-msg.me .chat-bubble{
+  background:rgba(0,200,255,.13);border-color:rgba(0,200,255,.3);
+}
+.chat-empty,.chat-sys{
+  font-family:var(--mono);font-size:11px;color:var(--chalk-dim);
+  text-align:center;padding:16px 0;opacity:.65;
+}
+
+.chat-form{
+  padding:8px 10px;border-top:1px solid var(--bord);
+  display:flex;gap:6px;flex-shrink:0;
+}
+.chat-input{
+  flex:1;padding:7px 10px;border-radius:8px;
+  border:1px solid var(--bord);background:rgba(0,0,0,.4);
+  color:var(--chalk);font-family:var(--mono);font-size:13px;outline:none;
+}
+.chat-input:focus{border-color:var(--bord2)}
+.chat-input:disabled{opacity:.45}
+.chat-send-btn{
+  padding:7px 14px;border-radius:8px;
+  background:rgba(0,200,255,.14);border:1.5px solid rgba(0,200,255,.4);
+  color:var(--cyan);font-size:16px;font-weight:700;transition:all .13s;
+}
+.chat-send-btn:hover{background:rgba(0,200,255,.24)}
+.chat-send-btn:disabled{opacity:.35}
+.chat-login-hint{
+  padding:9px;text-align:center;
+  font-family:var(--mono);font-size:12px;color:var(--chalk-dim);
+  border-top:1px solid var(--bord);flex-shrink:0;
+}
+
+/* Desktop: yan yana */
+@media(min-width:900px){
+  .battle-chat-wrap{flex-direction:row;align-items:flex-start}
+  .battle-col{flex:1}
+  .chat-col{width:272px;flex-shrink:0;position:sticky;top:80px;max-height:calc(100vh - 100px)}
+  .chat-msgs{min-height:0}
+}
+
+/* Mobil: chat-col gizli, float butonu görünür */
+@media(max-width:899px){
+  .chat-col{display:none}
+  .chat-col.open{
+    display:flex;position:fixed;left:0;right:0;bottom:0;
+    height:68vh;z-index:300;border-radius:16px 16px 0 0;
+    border-bottom:none;
+  }
+  .chat-close-btn{display:block}
+}
+.chat-float{
+  position:fixed;bottom:68px;right:14px;z-index:250;
+  width:50px;height:50px;border-radius:50%;
+  background:rgba(0,200,255,.14);border:1.5px solid rgba(0,200,255,.45);
+  color:var(--cyan);font-size:20px;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 4px 18px rgba(0,200,255,.22),0 4px 14px rgba(0,0,0,.5);
+  transition:all .14s;
+}
+.chat-float:hover{background:rgba(0,200,255,.24)}
+.chat-float-badge{
+  position:absolute;top:-3px;right:-3px;
+  min-width:17px;height:17px;border-radius:9px;
+  background:var(--signal);color:#fff;
+  font-family:var(--mono);font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;padding:0 3px;
+}
+.chat-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:299;
+  display:none;
+}
+.chat-backdrop.on{display:block}
 </style>
 </head>
 <body>
@@ -820,60 +929,84 @@ footer{
       <div class="fixchips" id="fixchips"></div>
     </div>
 
-    <div class="battle">
-      <div class="duel">
-        <div class="side">
-          <button class="flagbtn" id="btnA">
-            <img id="flagA" alt="">
-            <span class="cnt" id="cntA">0</span>
-          </button>
-          <div class="tname" id="nameA"></div>
-          <button class="tapBtn" data-side="A">Destekle</button>
+    <div class="battle-chat-wrap">
+      <div class="battle-col">
+        <div class="battle">
+          <div class="duel">
+            <div class="side">
+              <button class="flagbtn" id="btnA">
+                <img id="flagA" alt="">
+                <span class="cnt" id="cntA">0</span>
+              </button>
+              <div class="tname" id="nameA"></div>
+              <button class="tapBtn" data-side="A">RUSH</button>
+            </div>
+            <div class="vs">
+              <span class="spark" id="spark">⚔️</span>
+              VS
+              <div id="liveScore" class="live-score" hidden></div>
+              <div id="matchLock" class="match-lock" hidden></div>
+            </div>
+            <div class="side">
+              <button class="flagbtn" id="btnB">
+                <img id="flagB" alt="">
+                <span class="cnt" id="cntB">0</span>
+              </button>
+              <div class="tname" id="nameB"></div>
+              <button class="tapBtn" data-side="B">RUSH</button>
+            </div>
+          </div>
+
+          <div class="tug">
+            <div class="bar"><div class="fillL" id="fillL" style="width:50%"></div><div class="fillR"></div></div>
+            <div class="pcts"><span class="l" id="pctA">50%</span><span class="r" id="pctB">50%</span></div>
+          </div>
         </div>
-        <div class="vs">
-          <span class="spark" id="spark">⚔️</span>
-          VS
-          <div id="liveScore" class="live-score" hidden></div>
-          <div id="matchLock" class="match-lock" hidden></div>
+
+        <div class="panels">
+          <div class="panel mePanel">
+            <h3>⭐ Senin İstatistiklerin</h3>
+            <div class="uname" id="meName">–</div>
+            <div class="meStats">
+              <div>Bu Maçta<b id="meMatch">0</b></div>
+              <div>Toplam<b id="meTotal">0</b></div>
+              <div>Oyuncu Sıran<b id="meRank">–</b></div>
+            </div>
+          </div>
+          <div class="panel">
+            <h3 id="topAtitle">İlk 10</h3>
+            <ol id="topA"></ol>
+          </div>
+          <div class="panel">
+            <h3 id="topBtitle">İlk 10</h3>
+            <ol id="topB"></ol>
+          </div>
         </div>
-        <div class="side">
-          <button class="flagbtn" id="btnB">
-            <img id="flagB" alt="">
-            <span class="cnt" id="cntB">0</span>
-          </button>
-          <div class="tname" id="nameB"></div>
-          <button class="tapBtn" data-side="B">Destekle</button>
-        </div>
+
+        <div class="next" id="nextTr"></div>
       </div>
 
-      <div class="tug">
-        <div class="bar"><div class="fillL" id="fillL" style="width:50%"></div><div class="fillR"></div></div>
-        <div class="pcts"><span class="l" id="pctA">50%</span><span class="r" id="pctB">50%</span></div>
+      <!-- Chat paneli -->
+      <div class="chat-col" id="chatPanel">
+        <div class="chat-head">
+          <span>💬 CANLI SOHBET</span>
+          <button class="chat-close-btn" id="chatCloseBtn">×</button>
+        </div>
+        <div class="chat-msgs" id="chatMsgs">
+          <div class="chat-empty">Maç seçince sohbet yüklenir</div>
+        </div>
+        <div class="chat-form" id="chatForm" style="display:none">
+          <input class="chat-input" id="chatInput" placeholder="Mesaj yaz..." maxlength="200" autocomplete="off">
+          <button class="chat-send-btn" id="chatSendBtn">➤</button>
+        </div>
+        <div class="chat-login-hint" id="chatLoginHint">Sohbet için giriş yap</div>
       </div>
     </div>
-
-    <div class="panels">
-      <div class="panel mePanel">
-        <h3>⭐ Senin İstatistiklerin</h3>
-        <div class="uname" id="meName">–</div>
-        <div class="meStats">
-          <div>Bu Maçta<b id="meMatch">0</b></div>
-          <div>Toplam<b id="meTotal">0</b></div>
-          <div>Oyuncu Sıran<b id="meRank">–</b></div>
-        </div>
-      </div>
-      <div class="panel">
-        <h3 id="topAtitle">İlk 10</h3>
-        <ol id="topA"></ol>
-      </div>
-      <div class="panel">
-        <h3 id="topBtitle">İlk 10</h3>
-        <ol id="topB"></ol>
-      </div>
-    </div>
-
-    <div class="next" id="nextTr"></div>
   </section>
+
+  <!-- Mobil float butonu (sadece Kapışma sekmesinde görünür) -->
+  <button class="chat-float" id="chatFloat">💬</button>
+  <div class="chat-backdrop" id="chatBackdrop"></div>
 </main>
 
 <footer>CLICKRUSHER · bayraklar stilize çizimdir · resmi turnuva markalarıyla bağı yoktur</footer>
@@ -992,18 +1125,146 @@ function connectSSE(){
     try {
       const data = JSON.parse(e.data);
       applyState(data);
-      // Görüntülenen sayfayı güncelle
       if($('viewGrid').classList.contains('on')) sortGrid();
       if($('viewCountry').classList.contains('on')) paintCountry();
       if($('viewBattle').classList.contains('on')){ paintBattle(); paintMe(); }
       paintStrip();
     } catch {}
   };
+  es.addEventListener('chat', e => {
+    try {
+      const { fixtureId, msg } = JSON.parse(e.data);
+      if(fixtureId === chatState.fixId) appendChatMsg(msg, true);
+    } catch {}
+  });
   es.onerror = () => {
     es.close();
     setTimeout(connectSSE, 3000);
   };
 }
+
+/* ============== CHAT ============== */
+const chatState = { fixId: null, cooldownUntil: 0, unread: 0 };
+
+async function loadChat(fixtureId) {
+  if(chatState.fixId === fixtureId) return;
+  chatState.fixId = fixtureId;
+  chatState.unread = 0;
+  updateChatFloatBadge();
+  const msgsEl = $('chatMsgs');
+  msgsEl.innerHTML = '<div class="chat-sys">Yükleniyor...</div>';
+  try {
+    const res  = await fetch(`/api/chat/${fixtureId}`);
+    const data = await res.json();
+    msgsEl.innerHTML = '';
+    if(data.messages && data.messages.length) {
+      data.messages.forEach(m => appendChatMsg(m, false));
+    } else {
+      msgsEl.innerHTML = '<div class="chat-empty">Henüz mesaj yok — ilk sen yaz!</div>';
+    }
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  } catch {
+    msgsEl.innerHTML = '<div class="chat-empty">Yüklenemedi.</div>';
+  }
+  updateChatAuth();
+}
+
+function appendChatMsg(msg, scroll) {
+  const msgsEl = $('chatMsgs');
+  const empty = msgsEl.querySelector('.chat-empty,.chat-sys');
+  if(empty) empty.remove();
+  const isMe = msg.nick === (S.name || '').toLowerCase();
+  const div  = document.createElement('div');
+  div.className = 'chat-msg' + (isMe ? ' me' : '');
+  div.innerHTML = `<span class="chat-nick">${msg.name}</span><span class="chat-bubble">${msg.text}</span>`;
+  msgsEl.appendChild(div);
+  // Badge sayacı (panel kapalıysa)
+  const panelVisible = window.innerWidth >= 900 || $('chatPanel').classList.contains('open');
+  if(!isMe && !panelVisible) {
+    chatState.unread++;
+    updateChatFloatBadge();
+  }
+  if(scroll) {
+    const atBottom = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight < 80;
+    if(atBottom || isMe) msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+}
+
+function updateChatAuth() {
+  const loggedIn = !!S.name;
+  $('chatForm').style.display      = loggedIn ? '' : 'none';
+  $('chatLoginHint').style.display = loggedIn ? 'none' : '';
+}
+
+function updateChatFloatBadge() {
+  let badge = $('chatFloat').querySelector('.chat-float-badge');
+  if(chatState.unread > 0) {
+    if(!badge){ badge = document.createElement('span'); badge.className='chat-float-badge'; $('chatFloat').appendChild(badge); }
+    badge.textContent = chatState.unread > 9 ? '9+' : chatState.unread;
+  } else {
+    if(badge) badge.remove();
+  }
+}
+
+function openChatMobile() {
+  $('chatPanel').classList.add('open');
+  $('chatBackdrop').classList.add('on');
+  chatState.unread = 0;
+  updateChatFloatBadge();
+  setTimeout(() => $('chatMsgs').scrollTop = $('chatMsgs').scrollHeight, 50);
+}
+function closeChatMobile() {
+  $('chatPanel').classList.remove('open');
+  $('chatBackdrop').classList.remove('on');
+}
+
+$('chatCloseBtn').onclick  = closeChatMobile;
+$('chatBackdrop').onclick  = closeChatMobile;
+$('chatFloat').onclick     = openChatMobile;
+
+async function sendChatMsg() {
+  if(!S.name || !chatState.fixId) return;
+  const input = $('chatInput');
+  const text  = input.value.trim();
+  if(!text) return;
+  if(Date.now() < chatState.cooldownUntil) return;
+
+  input.disabled = true;
+  $('chatSendBtn').disabled = true;
+
+  try {
+    const res  = await fetch(`/api/chat/${chatState.fixId}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ device: deviceId, text }),
+    });
+    const data = await res.json();
+    if(data.ok) {
+      input.value = '';
+      chatState.cooldownUntil = Date.now() + 3000;
+      setTimeout(() => {
+        input.disabled = false;
+        $('chatSendBtn').disabled = false;
+        input.focus();
+      }, 3000);
+    } else {
+      input.disabled = false;
+      $('chatSendBtn').disabled = false;
+      if(data.reason === 'badword') {
+        input.style.borderColor = 'var(--signal)';
+        setTimeout(() => input.style.borderColor = '', 1500);
+      } else if(data.reason === 'rate_limited') {
+        chatState.cooldownUntil = Date.now() + 3000;
+        setTimeout(() => { input.disabled = false; $('chatSendBtn').disabled = false; }, 3000);
+      }
+    }
+  } catch {
+    input.disabled = false;
+    $('chatSendBtn').disabled = false;
+  }
+}
+
+$('chatSendBtn').onclick = sendChatMsg;
+$('chatInput').addEventListener('keydown', e => { if(e.key === 'Enter') sendChatMsg(); });
 
 /* ============== TIK KUYRUĞU & GÖNDERME ============== */
 function allowClick(){
@@ -1188,6 +1449,7 @@ function battleClick(side){
 }
 function paintBattle(full){
   if(!S.fix) return;
+  if(full) loadChat(S.fix.id);
   const f=S.fix, B=S.battles[f.id];
   if(!B) return;
   const ta=T[f.a],tb=T[f.b];
@@ -1255,8 +1517,16 @@ function showView(v){
   $('tabGrid').classList.toggle('on',v==='Grid'||v==='Country');
   $('tabBattle').classList.toggle('on',v==='Battle');
 }
-$('tabGrid').onclick=()=>{S.country=null;showView('Grid');sortGrid()};
-$('tabBattle').onclick=()=>{showView('Battle');buildChips();paintBattle(true)};
+$('tabGrid').onclick=()=>{
+  S.country=null;showView('Grid');sortGrid();
+  $('chatFloat').style.display='none';
+  closeChatMobile();
+};
+$('tabBattle').onclick=()=>{
+  showView('Battle');buildChips();paintBattle(true);
+  if(window.innerWidth<900) $('chatFloat').style.display='flex';
+  updateChatAuth();
+};
 
 $('btnA').onclick=()=>battleClick('A');
 $('btnB').onclick=()=>battleClick('B');
@@ -1367,6 +1637,7 @@ function saveAndEnter(name, pwd) {
   localStorage.setItem('ta26_name', name);
   localStorage.setItem('ta26_pwd', pwd);
   $('veil').classList.add('off');
+  updateChatAuth();
   checkPendingRace();
   loadState().then(() => connectSSE());
 }

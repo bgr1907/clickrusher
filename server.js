@@ -417,6 +417,64 @@ app.get('/api/profile', async (req) => {
   };
 });
 
+// ---- Chat SSE broadcast ----
+function broadcastChatMsg(fixtureId, msg) {
+  const data = `event: chat\ndata: ${JSON.stringify({ fixtureId, msg })}\n\n`;
+  for (const client of sseClients) {
+    try { client.write(data); } catch { sseClients.delete(client); }
+  }
+}
+
+// Chat: geçmişi al (son 50 mesaj, eskiden yeniye sıralı)
+app.get('/api/chat/:fixtureId', async (req) => {
+  const { fixtureId } = req.params;
+  const raw = await redis.lrange(`chat:match:${fixtureId}`, 0, 49);
+  const messages = (raw || []).map(r => JSON.parse(r)).reverse();
+  return { ok: true, messages };
+});
+
+// Chat: mesaj gönder
+app.post('/api/chat/:fixtureId', {
+  schema: { body: { type: 'object', required: ['device', 'text'],
+    properties: { device: { type: 'string' }, text: { type: 'string' } } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false, reason: 'invalid' };
+  const { device, text } = req.body;
+  const { fixtureId } = req.params;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
+  const displayName = await redis.get(`auth:device:${device}`);
+  if (!displayName) return { ok: false, reason: 'not_logged_in' };
+
+  const rawText = String(text ?? '').trim().slice(0, 200);
+  if (!rawText.length) return { ok: false, reason: 'empty' };
+  const escapeMap = { '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '&': '&amp;' };
+  const cleanText = rawText.replace(/[<>"'&]/g, c => escapeMap[c]);
+  if (containsBadWord(cleanText)) return { ok: false, reason: 'badword' };
+
+  const nick = displayName.toLowerCase().trim();
+  const rlKey = `chat:rl:${nick}`;
+  const limited = await redis.get(rlKey);
+  if (limited) return { ok: false, reason: 'rate_limited' };
+  await redis.set(rlKey, '1');
+  await redis.expire(rlKey, 3);
+
+  const msg = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    nick,
+    name: displayName,
+    text: cleanText,
+    ts: Date.now(),
+  };
+  const chatKey = `chat:match:${fixtureId}`;
+  await redis.lpush(chatKey, JSON.stringify(msg));
+  await redis.ltrim(chatKey, 0, 199);
+  await redis.expire(chatKey, 24 * 3600);
+
+  broadcastChatMsg(fixtureId, msg);
+  return { ok: true, msg };
+});
+
 const PORT = Number(process.env.PORT ?? 3000);
 app.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
   if (err) { console.error(err); process.exit(1); }
