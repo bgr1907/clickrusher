@@ -890,7 +890,7 @@ function connectSSE(){
       // Görüntülenen sayfayı güncelle
       if($('viewGrid').classList.contains('on')) sortGrid();
       if($('viewCountry').classList.contains('on')) paintCountry();
-      if($('viewBattle').classList.contains('on')) paintBattle();
+      if($('viewBattle').classList.contains('on')){ paintBattle(); paintMe(); }
       paintStrip();
     } catch {}
   };
@@ -933,6 +933,8 @@ async function flushClicks(){
       const me = await res.json();
       if(me?.total != null) S.mineTotal = me.total;
       paintStrip();
+      if($('viewCountry').classList.contains('on')) paintCountry();
+      if($('viewBattle').classList.contains('on')) paintMe();
     }
   } catch {
     pendingClicks = [...batch, ...pendingClicks];
@@ -1009,7 +1011,7 @@ function countryClick(){
   if(!S.country) return;
   const c=S.country;
   if(!queueClick('country', c)) return;
-  S.grid[c]++;S.minePerTeam[c]++;
+  S.grid[c]++;S.minePerTeam[c]++;S.mineTotal++;
   pop($('cFlagBtn'));
   paintCountry();paintStrip();
 }
@@ -1071,7 +1073,7 @@ function battleClick(side){
   }
   if(!queueClick('match', S.fix.id, side)) return;
   const B=S.battles[S.fix.id];if(!B)return;
-  B[side]++;
+  B[side]++;S.mineTotal++;
   trackClickRate(side);
   pop(side==='A'?$('btnA'):$('btnB'));
   const sp=$('spark');
