@@ -65,6 +65,7 @@ header{
 }
 .tz-pick button.on{background:var(--amber);color:#000}
 .tz-gmt{font-family:var(--mono);font-size:9px;color:var(--chalk-dim);letter-spacing:.05em;opacity:.75}
+.tz-clock{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--chalk);letter-spacing:.06em;text-align:center}
 
 /* Sonraki Maçlar etiketi */
 .chips-wrap{margin-bottom:14px}
@@ -343,6 +344,7 @@ footer{
     </a>
     <span class="live"><span class="dot"></span>CANLI</span>
     <div class="tz-wrap">
+      <div class="tz-clock" id="tzClock"></div>
       <div class="tz-pick" id="tzPick">
         <button data-tz="Europe/Istanbul">TR</button>
         <button data-tz="America/New_York">ET</button>
@@ -404,7 +406,7 @@ footer{
 
   <section class="view" id="viewBattle">
     <div class="chips-wrap">
-      <span class="chips-label">Sonraki Maçlar</span>
+      <span class="chips-label">Sıradaki Maçlar</span>
       <div class="fixchips" id="fixchips"></div>
     </div>
 
@@ -1036,6 +1038,14 @@ function updateTzGmt() {
   const el = $('tzGmt');
   if (el) el.textContent = TZ_GMT[activeTZ] || '';
 }
+function updateClock() {
+  const el = $('tzClock');
+  if (el) el.textContent = new Date().toLocaleTimeString('tr-TR', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: activeTZ,
+  });
+}
+setInterval(updateClock, 1000);
+updateClock();
 (function initTZPick() {
   document.querySelectorAll('#tzPick button').forEach(btn => {
     btn.classList.toggle('on', btn.dataset.tz === activeTZ);
@@ -1045,6 +1055,7 @@ function updateTzGmt() {
       document.querySelectorAll('#tzPick button').forEach(b =>
         b.classList.toggle('on', b.dataset.tz === activeTZ));
       updateTzGmt();
+      updateClock();
       buildChips();
     };
   });
