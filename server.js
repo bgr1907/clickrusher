@@ -446,7 +446,7 @@ app.post('/api/chat/:fixtureId', {
   const displayName = await redis.get(`auth:device:${device}`);
   if (!displayName) return { ok: false, reason: 'not_logged_in' };
 
-  const rawText = String(text ?? '').trim().slice(0, 200);
+  const rawText = String(text ?? '').trim().slice(0, 140);
   if (!rawText.length) return { ok: false, reason: 'empty' };
   const escapeMap = { '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '&': '&amp;' };
   const cleanText = rawText.replace(/[<>"'&]/g, c => escapeMap[c]);
