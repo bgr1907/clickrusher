@@ -161,6 +161,12 @@ main{max-width:1080px;margin:0 auto;padding:14px 12px 80px;position:relative;z-i
   font-weight:800;font-size:clamp(18px,5vw,26px);color:var(--signal);letter-spacing:.06em;
   z-index:1;padding:6px 4px;text-shadow:0 1px 3px rgba(0,0,0,.5);
 }
+.live-score{
+  font-family:var(--mono);font-size:clamp(17px,4.5vw,22px);font-weight:700;
+  color:var(--amber);text-align:center;line-height:1.1;
+}
+.live-score.done{color:var(--chalk-dim);opacity:.65}
+.live-score small{display:block;font-size:10px;font-weight:500;opacity:.7;margin-top:1px}
 .vs .spark{font-size:clamp(20px,6vw,30px);transition:transform .1s}
 .vs .spark.hitL{transform:rotate(-14deg) scale(1.2)}
 .vs .spark.hitR{transform:rotate(14deg) scale(1.2)}
@@ -352,7 +358,11 @@ footer{
           <div class="tname" id="nameA"></div>
           <button class="tapBtn" data-side="A">Destekle</button>
         </div>
-        <div class="vs"><span class="spark" id="spark">⚔️</span>VS</div>
+        <div class="vs">
+          <span class="spark" id="spark">⚔️</span>
+          VS
+          <div id="liveScore" class="live-score" hidden></div>
+        </div>
         <div class="side">
           <button class="flagbtn" id="btnB">
             <img id="flagB" alt="">
@@ -616,6 +626,7 @@ const S={
   battles: {},
   fixtures: [],
   fix: null,
+  liveScores: {},
   cTops: {},
   countryTops: {},
   country: null,
@@ -659,6 +670,7 @@ function applyState(data){
     if(!S.fix && S.fixtures.length) S.fix = S.fixtures[0];
   }
   if(data.countryTops) Object.assign(S.cTops, data.countryTops);
+  if(data.liveScores) Object.assign(S.liveScores, data.liveScores);
   if(data.me) {
     S.mineTotal = data.me.total ?? S.mineTotal;
   }
@@ -863,6 +875,15 @@ function paintBattle(full){
     $('topAtitle').innerHTML=`${flagImg(ta,18)} İlk 10 Tıklayıcı`;
     $('topBtitle').innerHTML=`${flagImg(tb,18)} İlk 10 Tıklayıcı`;
   }
+  const ls=S.liveScores[f.id];
+  const lsEl=$('liveScore');
+  if(ls){
+    lsEl.className='live-score'+(ls.finished?' done':'');
+    lsEl.innerHTML=`${ls.homeScore} – ${ls.awayScore}`+
+      (ls.finished?'<small>Bitti</small>':(ls.elapsed?`<small>${ls.elapsed}</small>`:''));
+    lsEl.hidden=false;
+  } else { lsEl.hidden=true; }
+
   $('cntA').textContent=fmt(B.A);$('cntB').textContent=fmt(B.B);
   const tot=B.A+B.B||1;
   const pA=Math.round(B.A/tot*100);

@@ -14,6 +14,7 @@ const { applyLimits }    = require('./lib/ratelimit');
 const counters           = require('./lib/counters');
 const { registerUser, loginUser } = require('./lib/auth');
 const { containsBadWord }         = require('./lib/badwords');
+const scoresLib          = require('./lib/scores');
 const redis              = require('./lib/redis');
 
 const app = Fastify({ logger: { level: 'warn' } });
@@ -54,8 +55,9 @@ function sanitizeName(name) {
 
 // ---- Durum snapshot ----
 async function buildState(deviceId, username) {
-  const [scores, ...fixData] = await Promise.all([
+  const [scores, liveScores, ...fixData] = await Promise.all([
     counters.getCountryScores(TEAMS),
+    scoresLib.getLiveScores(fixtures),
     ...fixtures.flatMap(f => [
       counters.getMatchCounters(f.id),
       counters.getMatchTop10(f.id, 'A'),
@@ -75,7 +77,7 @@ async function buildState(deviceId, username) {
     topB: fixData[i * 3 + 2],
   }));
 
-  const state = { scores, fixtures: fixtureStates, countryTops };
+  const state = { scores, fixtures: fixtureStates, countryTops, liveScores };
   if (deviceId && username) {
     state.me = await counters.getUserStats(deviceId, username);
   }
@@ -210,4 +212,5 @@ const PORT = Number(process.env.PORT ?? 3000);
 app.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
   if (err) { console.error(err); process.exit(1); }
   console.log(`Taraftar Arena 26 → http://localhost:${PORT}`);
+  scoresLib.start();
 });
