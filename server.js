@@ -91,9 +91,10 @@ async function buildState(deviceId, username) {
 
   const state = { scores, fixtures: fixtureStates, countryTops, liveScores };
   if (deviceId && username) {
+    const nick = username.toLowerCase().trim();
     [state.me, state.myCountries] = await Promise.all([
-      counters.getUserStats(deviceId, username),
-      counters.getUserCountryStats(deviceId),
+      counters.getUserStats(nick, username),
+      counters.getUserCountryStats(nick),
     ]);
   }
   return state;
@@ -176,19 +177,20 @@ app.post('/api/clicks', {
   const allowed = applyLimits(device, ip, validItems);
   if (allowed.length === 0) return reply.code(204).send();
 
+  const nick = cleanName.toLowerCase();
   let userTotal = 0;
   await Promise.all(allowed.map(async it => {
     if (it.type === 'country') {
-      await counters.addCountryClicks(it.id, device, cleanName, it.n);
+      await counters.addCountryClicks(it.id, nick, cleanName, it.n);
     } else {
       const side = ['A','B'].includes(it.side) ? it.side : 'A';
-      await counters.addMatchClicks(it.id, side, device, cleanName, it.n);
+      await counters.addMatchClicks(it.id, side, cleanName, it.n);
     }
     userTotal += it.n;
   }));
 
-  await counters.updateUser(device, cleanName, userTotal);
-  return counters.getUserStats(device, cleanName);
+  await counters.updateUser(nick, cleanName, userTotal);
+  return counters.getUserStats(nick, cleanName);
 });
 
 // SSE akışı
@@ -347,16 +349,20 @@ app.get('/api/races/open', async () => racesLib.getOpenRaces());
 app.get('/api/profile', async (req) => {
   const { device } = req.query;
   if (!device || !DEVICE_RE.test(String(device))) return { ok: false };
-  const [userHash, countries, raceHistory] = await Promise.all([
-    redis.hgetall(`user:${device}`),
-    counters.getUserCountryStats(device),
-    racesLib.getUserRaceHistory(device),
+  const displayName = await redis.get(`auth:device:${device}`);
+  if (!displayName) return { ok: false, reason: 'not_logged_in' };
+  const nick = displayName.toLowerCase().trim();
+  const [userHash, authHash, countries, raceHistory] = await Promise.all([
+    redis.hgetall(`user:nick:${nick}`),
+    redis.hgetall(`auth:nick:${nick}`),
+    counters.getUserCountryStats(nick),
+    racesLib.getUserRaceHistory(nick),
   ]);
   return {
-    ok:          true,
-    name:        userHash?.name || null,
-    total:       Number(userHash?.total ?? 0),
-    createdAt:   userHash?.createdAt ? Number(userHash.createdAt) : null,
+    ok:        true,
+    name:      displayName,
+    total:     Number(userHash?.total ?? 0),
+    createdAt: authHash?.createdAt ? Number(authHash.createdAt) : null,
     countries,
     raceHistory,
   };

@@ -1017,7 +1017,7 @@ function paintCountry(){
   const c=S.country;if(!c)return;
   const top = (S.cTops[c] || []).map(p => ({
     ...p,
-    me: p.deviceId === deviceId,
+    me: p.nick === (S.name||'').toLowerCase(),
   }));
   $('cCnt').textContent=fmt(S.grid[c]);
   $('cCntBadge').textContent=fmt(S.grid[c]);
@@ -1127,7 +1127,7 @@ function paintTop(ol,list){
   ol.innerHTML='';
   (list||[]).slice(0,10).forEach((p,i)=>{
     const li=document.createElement('li');
-    const isMe = p.deviceId===deviceId;
+    const isMe = p.nick===(S.name||'').toLowerCase();
     if(isMe) li.classList.add('me');
     li.innerHTML=`<span class="nm"><span class="idx">${i+1}</span>${isMe?'⭐ ':''}${p.name}</span><span class="sc">${fmt(p.score)}</span>`;
     ol.appendChild(li);
