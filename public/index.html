@@ -139,7 +139,14 @@ main{max-width:1080px;margin:0 auto;padding:14px 12px 80px;position:relative;z-i
 .gItem{
   position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;
   padding:8px 0 2px;user-select:none;
-  transition:transform .08s;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1), filter .18s;
+  cursor:pointer;
+}
+@media(hover:hover){
+.gItem:hover{transform:translateY(-8px) scale(1.12);filter:brightness(1.18) drop-shadow(0 8px 18px rgba(0,0,0,.55));z-index:10}
+.gItem:hover .fc{border-color:var(--amber);box-shadow:0 0 22px rgba(255,200,61,.55),0 8px 24px rgba(0,0,0,.5)}
+.gItem:hover .cnt{color:var(--chalk);background:rgba(255,200,61,.22)}
+.flagbtn:hover{transform:scale(1.1);border-color:var(--amber);box-shadow:0 0 28px rgba(255,200,61,.5),0 8px 24px rgba(0,0,0,.5);filter:brightness(1.1)}
 }
 .gItem:active{transform:scale(.92)}
 .gItem .fc{width:clamp(58px,22vw,84px);height:clamp(58px,22vw,84px)}
@@ -174,7 +181,7 @@ main{max-width:1080px;margin:0 auto;padding:14px 12px 80px;position:relative;z-i
   border:4px solid rgba(255,255,255,.85);
   box-shadow:0 4px 14px rgba(0,0,0,.4);
   overflow:hidden;user-select:none;
-  transition:transform .07s, border-color .15s, box-shadow .15s;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1), border-color .15s, box-shadow .18s, filter .18s;
 }
 .flagbtn img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .flagbtn:active{transform:scale(.93)}
