@@ -381,13 +381,13 @@ footer{
 .wiz-vis-btn{flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid var(--bord);background:rgba(255,255,255,.04);font-family:var(--mono);font-size:11px;font-weight:700;color:var(--chalk-dim);transition:all .15s;cursor:pointer;text-align:center;line-height:1.4}
 .wiz-vis-btn span{font-size:9px;font-weight:400;opacity:.75;display:block;margin-top:2px}
 .wiz-vis-btn.selected{border-color:var(--amber);color:var(--amber);background:rgba(255,200,61,.08)}
-/* ---- Desktop: drawer her zaman açık ---- */
+/* ---- Desktop: sidebar toggle ---- */
 @media(min-width:900px){
-  #menuBtn{display:none}
   #drawerOverlay{display:none!important}
   #drawerClose{display:none}
-  #drawer{transform:translateX(0)!important;width:240px}
-  body{padding-left:240px}
+  #drawer{width:240px;transition:transform .22s ease}
+  body.sidebar-open #drawer{transform:translateX(0)}
+  body.sidebar-open{padding-left:240px}
 }
 
 /* ============ YARIŞMA SİHİRBAZI ============ */
@@ -1358,19 +1358,36 @@ setInterval(()=>{if($('viewGrid').classList.contains('on'))sortGrid()},2000);
 /* ============================================================
    SOL MENÜ (DRAWER)
    ============================================================ */
+function isDesktop(){ return window.innerWidth >= 900; }
+
+// Masaüstünde sidebar tercihini localStorage'dan yükle (varsayılan: açık)
+if(isDesktop() && localStorage.getItem('sidebar_open') !== '0'){
+  document.body.classList.add('sidebar-open');
+}
+
 function openDrawer(){
-  $('drawer').classList.add('on');
-  $('drawerOverlay').classList.add('on');
+  if(isDesktop()){
+    document.body.classList.add('sidebar-open');
+    localStorage.setItem('sidebar_open','1');
+  } else {
+    $('drawer').classList.add('on');
+    $('drawerOverlay').classList.add('on');
+  }
   loadOpenRaces();
 }
 function closeDrawer(){
-  $('drawer').classList.remove('on');
-  $('drawerOverlay').classList.remove('on');
+  if(isDesktop()){
+    document.body.classList.remove('sidebar-open');
+    localStorage.setItem('sidebar_open','0');
+  } else {
+    $('drawer').classList.remove('on');
+    $('drawerOverlay').classList.remove('on');
+  }
 }
-$('menuBtn').onclick      = openDrawer;
+$('menuBtn').onclick      = ()=>{ isDesktop() ? (document.body.classList.contains('sidebar-open') ? closeDrawer() : openDrawer()) : openDrawer(); };
 $('drawerClose').onclick  = closeDrawer;
 $('drawerOverlay').onclick= closeDrawer;
-$('menuCreateRace').onclick = ()=>{ closeDrawer(); openWizard(); };
+$('menuCreateRace').onclick = ()=>{ if(!isDesktop()) closeDrawer(); openWizard(); };
 
 async function loadOpenRaces(){
   const el=$('openRacesList');
@@ -1390,7 +1407,7 @@ async function loadOpenRaces(){
         <div class="ori-meta">${modeLabel} · ${winLabel}</div>
       </div>
       <div class="ori-players">${r.playerCount}/${r.maxPlayers}</div>`;
-      d.onclick=()=>{ closeDrawer(); window.location.href='/race.html?id='+r.id; };
+      d.onclick=()=>{ if(!isDesktop()) closeDrawer(); window.location.href='/race.html?id='+r.id; };
       el.appendChild(d);
     });
   } catch { el.innerHTML='<div class="open-races-empty">Yüklenemedi</div>'; }
