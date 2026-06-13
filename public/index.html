@@ -275,9 +275,11 @@ footer{
     <span class="flag">⚽</span>
     <h2>Taraftar <span class="y">Arena</span> 26</h2>
     <p>Bayrağına tıkla, ülkeni zirveye taşı. Sıralamada görünmek için bir takma ad seç.</p>
-    <input id="unameIn" maxlength="16" placeholder="takma adın" autocomplete="off">
+    <input id="unameIn" maxlength="15" placeholder="takma adın" autocomplete="off" spellcheck="false">
+    <input id="pwdIn" type="password" maxlength="20" placeholder="şifre (en az 4 karakter)" autocomplete="current-password" style="margin-top:8px">
+    <div id="authMsg" style="font-family:var(--mono);font-size:12px;color:var(--signal);margin-top:8px;min-height:16px;text-align:center"></div>
     <button class="go" id="goBtn">Arenaya Gir</button>
-    <div class="hint">kayıt yok · şifre yok · sadece parmak hızı</div>
+    <div class="hint">takma adın + şifren = hesabın · şifreni unutma</div>
   </div>
 </div>
 
@@ -410,6 +412,7 @@ let deviceId = localStorage.getItem('ta26_device');
 if (!deviceId) { deviceId = genId(); localStorage.setItem('ta26_device', deviceId); }
 
 let storedName = localStorage.getItem('ta26_name');
+let storedPwd  = localStorage.getItem('ta26_pwd');
 
 // ---- 48 takım (sunucuyla aynı kaynak: data/teams.json'dan inline edilmiş) ----
 const TEAMS = [
@@ -705,7 +708,7 @@ async function flushClicks(){
     const res = await fetch('/api/clicks', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({device: deviceId, name: S.name, items: batch}),
+      body: JSON.stringify({device: deviceId, name: S.name, items: batch, _hp: ''}),
     });
     if(!res.ok) {
       // Başarısız olursa kuyruğa geri ekle
@@ -901,25 +904,83 @@ $('btnA').onclick=()=>battleClick('A');
 $('btnB').onclick=()=>battleClick('B');
 document.querySelectorAll('.tapBtn[data-side]').forEach(b=>b.onclick=()=>battleClick(b.dataset.side));
 
-$('goBtn').onclick=enter;
-$('unameIn').addEventListener('keydown',e=>{if(e.key==='Enter')enter()});
-function enter(){
-  const v=$('unameIn').value.trim();
-  const name=v||'taraftar'+(Math.floor(Math.random()*900)+100);
-  S.name=name;
-  localStorage.setItem('ta26_name', name);
-  $('veil').classList.add('off');
-  paintMe();
-  // Ad ile state yeniden çek (kişisel istatistikler için)
-  loadState();
-  connectSSE();
+// Task 3: Auth modal mantığı
+let authMode = 'register'; // 'register' | 'login'
+
+function showAuthMsg(msg, warn=true) {
+  const el = $('authMsg');
+  el.textContent = msg;
+  el.style.color = warn ? 'var(--signal)' : 'var(--amber)';
 }
 
-// Daha önce giriş yapılmışsa modalı atla
-if(storedName){
-  S.name = storedName;
+function saveAndEnter(name, pwd) {
+  S.name = name;
+  localStorage.setItem('ta26_name', name);
+  localStorage.setItem('ta26_pwd', pwd);
   $('veil').classList.add('off');
-  loadState().then(()=>connectSSE());
+  loadState().then(() => connectSSE());
+}
+
+async function enter() {
+  const nick = $('unameIn').value.trim();
+  const pwd  = $('pwdIn').value;
+  if (nick.length < 2) return showAuthMsg('Nick en az 2 karakter olmalı');
+  if (pwd.length < 4)  return showAuthMsg('Şifre en az 4 karakter olmalı');
+
+  $('goBtn').disabled = true;
+  $('goBtn').textContent = '...';
+  try {
+    if (authMode === 'register') {
+      const res  = await fetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({device:deviceId, name:nick, password:pwd}) });
+      const data = await res.json();
+      if (data.ok) { saveAndEnter(data.name, pwd); return; }
+      if (data.reason === 'taken') {
+        authMode = 'login';
+        showAuthMsg('Bu nick alınmış — şifreni gir', false);
+        $('goBtn').textContent = 'Giriş Yap';
+        $('goBtn').disabled = false;
+        $('pwdIn').select();
+        return;
+      }
+      showAuthMsg(data.reason === 'badword' ? 'Bu takma ad kullanılamaz, başka bir seç' : 'Geçersiz nick (harf, rakam, _ ve - kullan)');
+    } else {
+      const res  = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({device:deviceId, name:nick, password:pwd}) });
+      const data = await res.json();
+      if (data.ok) { saveAndEnter(data.name, pwd); return; }
+      showAuthMsg(data.reason === 'not_found' ? 'Kullanıcı bulunamadı' : 'Şifre yanlış, tekrar dene');
+    }
+  } catch(e) {
+    showAuthMsg('Bağlantı hatası, tekrar dene');
+  }
+  $('goBtn').disabled = false;
+  $('goBtn').textContent = authMode === 'login' ? 'Giriş Yap' : 'Arenaya Gir';
+}
+
+$('goBtn').onclick = enter;
+$('unameIn').addEventListener('keydown', e => { if(e.key==='Enter') $('pwdIn').focus(); });
+$('pwdIn').addEventListener('keydown', e => { if(e.key==='Enter') enter(); });
+
+// Daha önce giriş yapılmışsa otomatik login dene
+if (storedName && storedPwd) {
+  fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({device:deviceId, name:storedName, password:storedPwd}) })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        S.name = data.name;
+        $('veil').classList.add('off');
+        loadState().then(() => connectSSE());
+      }
+      // Login başarısız: modal açık kalır, kullanıcı tekrar girer
+    })
+    .catch(() => {
+      // Network hatası: offline modda devam et
+      S.name = storedName;
+      $('veil').classList.add('off');
+      loadState().then(() => connectSSE());
+    });
 }
 
 // Grid periyodik sıralama
