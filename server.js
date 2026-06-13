@@ -15,6 +15,7 @@ const counters           = require('./lib/counters');
 const { registerUser, loginUser } = require('./lib/auth');
 const { containsBadWord }         = require('./lib/badwords');
 const scoresLib          = require('./lib/scores');
+const racesLib           = require('./lib/races');
 const redis              = require('./lib/redis');
 
 const app = Fastify({ logger: { level: 'warn' } });
@@ -37,8 +38,9 @@ function loadFixtures() {
 loadFixtures();
 setInterval(loadFixtures, 5 * 60 * 1000);
 
-// ---- SSE istemci havuzu ----
-const sseClients = new Set();
+// ---- SSE istemci havuzları ----
+const sseClients  = new Set();
+const raceClients = new Map(); // raceId → Set<res>
 
 // ---- Doğrulama sabitleri ----
 // Task 2: max 15 karakter, nokta kaldırıldı
@@ -220,6 +222,145 @@ async function broadcast() {
   } catch (e) { console.error('[broadcast] hata:', e.message); }
 }
 setInterval(broadcast, 1000);
+
+// ---- Yarış SSE ----
+async function broadcastRace(raceId) {
+  const set = raceClients.get(raceId);
+  if (!set || set.size === 0) return;
+  const state = await racesLib.getRaceState(raceId);
+  if (!state) return;
+  const data = `data: ${JSON.stringify(state)}\n\n`;
+  for (const client of set) {
+    try { client.write(data); } catch { set.delete(client); }
+  }
+}
+
+// Geri sayım → aktif → (süre bazlıysa) bitiş zinciri
+function scheduleRaceTransitions(raceId, winType, winValue) {
+  setTimeout(async () => {
+    const race = await racesLib.activateRace(raceId);
+    if (!race) return;
+    await broadcastRace(raceId);
+    if (winType === 'time') {
+      setTimeout(async () => {
+        const r = await redis.hgetall(`race:${raceId}`);
+        if (r && r.status === 'active') {
+          await racesLib.finishRace(raceId);
+          await broadcastRace(raceId);
+        }
+      }, winValue * 1000);
+    }
+  }, 10_000);
+}
+
+app.get('/api/race/:id/stream', async (req, reply) => {
+  const { id } = req.params;
+  reply.raw.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection':    'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  reply.raw.write('retry: 3000\n\n');
+  if (!raceClients.has(id)) raceClients.set(id, new Set());
+  raceClients.get(id).add(reply.raw);
+  const state = await racesLib.getRaceState(id);
+  if (state) reply.raw.write(`data: ${JSON.stringify(state)}\n\n`);
+  req.raw.on('close', () => {
+    const s = raceClients.get(id);
+    if (s) { s.delete(reply.raw); if (!s.size) raceClients.delete(id); }
+  });
+  return reply;
+});
+
+// Yarış yarat
+app.post('/api/race/create', {
+  schema: { body: { type:'object', required:['device','name','mode','winType','winValue','maxPlayers'],
+    properties: { device:{type:'string'}, name:{type:'string'}, mode:{type:'string'},
+      winType:{type:'string'}, winValue:{type:'number'}, maxPlayers:{type:'number'},
+      teams:{type:'array'}, creatorFlag:{type:'object'} } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false, reason: 'invalid' };
+  const { device, name, mode, winType, winValue, maxPlayers, teams, creatorFlag } = req.body;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
+  const registeredName = await redis.get(`auth:device:${device}`);
+  if (!registeredName) return { ok: false, reason: 'not_logged_in' };
+  if (!['individual','team'].includes(mode))   return { ok: false, reason: 'invalid' };
+  if (!['clicks','time'].includes(winType))     return { ok: false, reason: 'invalid' };
+  const wv = Math.min(Math.max(Math.floor(winValue), winType === 'clicks' ? 50 : 15), winType === 'clicks' ? 10000 : 300);
+  const mp = Math.min(Math.max(Math.floor(maxPlayers), 2), 16);
+  return racesLib.createRace({ creatorDevice: device, creatorName: registeredName, mode, winType, winValue: wv, maxPlayers: mp, teams, creatorFlag });
+});
+
+// Yarışa katıl
+app.post('/api/race/:id/join', {
+  schema: { body: { type:'object', required:['device','name'],
+    properties: { device:{type:'string'}, name:{type:'string'}, flag:{type:'object'}, teamId:{type:'string'} } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false, reason: 'invalid' };
+  const { device, name, flag, teamId } = req.body;
+  const { id } = req.params;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
+  const registeredName = await redis.get(`auth:device:${device}`);
+  if (!registeredName) return { ok: false, reason: 'not_logged_in' };
+  const result = await racesLib.joinRace(id, device, registeredName, flag, teamId);
+  if (!result.ok) return result;
+  if (result.shouldStartCountdown) {
+    const race = await redis.hgetall(`race:${id}`);
+    await racesLib.beginCountdown(id);
+    scheduleRaceTransitions(id, race.winType, Number(race.winValue));
+  }
+  await broadcastRace(id);
+  return { ok: true };
+});
+
+// Yarışa tık gönder
+app.post('/api/race/:id/click', {
+  schema: { body: { type:'object', required:['device','n'],
+    properties: { device:{type:'string'}, n:{type:'number'} } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false };
+  const { device, n } = req.body;
+  const { id } = req.params;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false };
+  const safeN = Math.min(Math.max(Math.floor(n), 1), 10);
+  const result = await racesLib.addRaceClick(id, device, safeN);
+  if (!result.ok) return { ok: false };
+  if (result.finished) await racesLib.finishRace(id);
+  await broadcastRace(id);
+  return { ok: true };
+});
+
+// Yarış durumunu al
+app.get('/api/race/:id/state', async (req) => {
+  const state = await racesLib.getRaceState(req.params.id);
+  return state ?? { error: 'not_found' };
+});
+
+// Bekleyen yarışları listele
+app.get('/api/races/open', async () => racesLib.getOpenRaces());
+
+// Profil endpoint
+app.get('/api/profile', async (req) => {
+  const { device } = req.query;
+  if (!device || !DEVICE_RE.test(String(device))) return { ok: false };
+  const [userHash, countries, raceHistory] = await Promise.all([
+    redis.hgetall(`user:${device}`),
+    counters.getUserCountryStats(device),
+    racesLib.getUserRaceHistory(device),
+  ]);
+  return {
+    ok:          true,
+    name:        userHash?.name || null,
+    total:       Number(userHash?.total ?? 0),
+    createdAt:   userHash?.createdAt ? Number(userHash.createdAt) : null,
+    countries,
+    raceHistory,
+  };
+});
 
 const PORT = Number(process.env.PORT ?? 3000);
 app.listen({ port: PORT, host: '0.0.0.0' }, (err) => {

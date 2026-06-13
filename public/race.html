@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Click Yarışı — CLICKRUSHER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Saira+Condensed:wght@600;800&family=Chivo+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --grass1:#2E7D33;--grass2:#27702C;
+  --panel:rgba(6,24,12,.86);--panel-2:rgba(10,34,18,.92);
+  --bord:rgba(255,255,255,.16);--chalk:#F2F7F0;--chalk-dim:#BFD6C4;
+  --amber:#FFC83D;--signal:#FF4D42;
+  --display:'Saira Condensed',system-ui,sans-serif;
+  --mono:'Chivo Mono',ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%}
+body{
+  background:repeating-linear-gradient(90deg,var(--grass1) 0 72px,var(--grass2) 72px 144px);
+  color:var(--chalk);font-family:var(--display);overflow-x:hidden;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+header{
+  position:sticky;top:0;z-index:50;
+  background:var(--panel-2);backdrop-filter:blur(8px);
+  border-bottom:2px solid var(--bord);
+  padding:12px 16px;display:flex;align-items:center;gap:10px;
+}
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;flex-shrink:0;
+  font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--chalk-dim);background:rgba(255,255,255,.07);
+  border:1px solid var(--bord);border-radius:999px;padding:7px 14px;text-decoration:none;
+}
+.hdr-info{flex:1;min-width:0;text-align:center}
+.hdr-info .race-id{font-family:var(--mono);font-size:11px;color:var(--chalk-dim);letter-spacing:.1em}
+.hdr-info .race-meta{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.share-btn{
+  flex-shrink:0;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--amber);background:rgba(255,200,61,.12);border:1px solid rgba(255,200,61,.3);
+  border-radius:999px;padding:6px 12px;
+}
+
+main{max-width:800px;margin:0 auto;padding:16px 12px 80px}
+
+/* ---- Durum Alanı ---- */
+.status-bar{
+  text-align:center;padding:10px;margin-bottom:16px;
+  background:var(--panel);border:1px solid var(--bord);border-radius:10px;
+  font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.06em;
+}
+.status-bar.waiting{color:var(--chalk-dim)}
+.status-bar.countdown{color:var(--amber)}
+.status-bar.active{color:#4DFF88}
+.status-bar.finished{color:var(--chalk-dim)}
+
+/* ---- Bekleme lobisi ---- */
+.lobby{background:var(--panel);border:1px solid var(--bord);border-radius:16px;padding:20px;margin-bottom:16px}
+.lobby h3{font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:12px}
+.player-list{display:flex;flex-direction:column;gap:8px}
+.player-row{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.04);border:1px solid var(--bord);border-radius:8px;padding:8px 12px;
+}
+.player-row .pflag{width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;background:#234}
+.player-row .pflag img{width:100%;height:100%;object-fit:cover;display:block}
+.player-row .pname{font-size:14px;font-weight:700}
+.player-row .pscore{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--amber);margin-left:auto}
+.player-row.me{background:rgba(255,200,61,.08);border-color:rgba(255,200,61,.3)}
+
+/* ---- Takım görünümü ---- */
+.teams-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.team-card{background:var(--panel);border:1px solid var(--bord);border-radius:14px;padding:14px;text-align:center}
+.team-card.winning{border-color:var(--amber);box-shadow:0 0 18px rgba(255,200,61,.25)}
+.team-flag{width:64px;height:64px;border-radius:50%;overflow:hidden;margin:0 auto 8px;
+  border:3px solid rgba(255,255,255,.3);background:#234}
+.team-flag img{width:100%;height:100%;object-fit:cover;display:block}
+.team-name{font-size:15px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.team-clicks{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--amber);margin-top:4px}
+.team-members{font-family:var(--mono);font-size:10px;color:var(--chalk-dim);margin-top:4px}
+.team-progress{
+  height:6px;border-radius:999px;background:rgba(0,0,0,.4);border:1px solid var(--bord);
+  overflow:hidden;margin-top:8px;
+}
+.team-fill{height:100%;background:linear-gradient(90deg,var(--amber),#FFE08A);transition:width .3s}
+
+/* ---- Bireysel yarış ---- */
+.racers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.racer-card{
+  background:var(--panel);border:1px solid var(--bord);border-radius:12px;
+  padding:14px 10px;text-align:center;position:relative;
+}
+.racer-card.winner{border-color:var(--amber);box-shadow:0 0 18px rgba(255,200,61,.3)}
+.racer-card.me{background:rgba(255,200,61,.07);border-color:rgba(255,200,61,.25)}
+.racer-flag{width:60px;height:60px;border-radius:50%;overflow:hidden;margin:0 auto 8px;
+  border:3px solid rgba(255,255,255,.3);background:#234}
+.racer-flag img{width:100%;height:100%;object-fit:cover;display:block}
+.racer-name{font-size:12px;font-weight:800;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.racer-clicks{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--amber);margin-top:2px}
+.racer-rank{
+  position:absolute;top:6px;right:8px;
+  font-family:var(--mono);font-size:10px;font-weight:700;color:var(--chalk-dim);
+  background:rgba(0,0,0,.55);border:1px solid var(--bord);border-radius:999px;padding:0 6px;line-height:15px;
+}
+.racer-rank.r1,.racer-rank.r2,.racer-rank.r3{color:var(--amber)}
+.racer-progress{height:4px;border-radius:999px;background:rgba(0,0,0,.4);overflow:hidden;margin-top:6px}
+.racer-fill{height:100%;background:var(--amber);transition:width .3s}
+
+/* ---- Geri sayım overlay ---- */
+.countdown-overlay{
+  position:fixed;inset:0;background:rgba(4,16,8,.88);backdrop-filter:blur(6px);
+  z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+}
+.countdown-overlay.off{display:none}
+.countdown-num{
+  font-family:'Lilita One',cursive;font-size:clamp(80px,22vw,140px);
+  color:var(--amber);line-height:1;text-shadow:0 0 40px rgba(255,200,61,.6);
+  animation:pulse .8s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.countdown-label{font-family:var(--mono);font-size:16px;font-weight:700;letter-spacing:.1em;color:var(--chalk-dim)}
+
+/* ---- Kazanan overlay ---- */
+.winner-overlay{
+  position:fixed;inset:0;background:rgba(4,16,8,.88);backdrop-filter:blur(6px);
+  z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:24px;
+}
+.winner-overlay.off{display:none}
+.winner-trophy{font-size:72px}
+.winner-title{font-family:'Lilita One',cursive;font-size:clamp(28px,7vw,42px);color:var(--amber)}
+.winner-name{font-family:'Lilita One',cursive;font-size:clamp(22px,5vw,32px)}
+.winner-btn{
+  margin-top:8px;padding:14px 32px;border-radius:999px;background:var(--amber);
+  color:#173015;font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+}
+
+/* ---- Katılma ekranı ---- */
+.join-screen{background:var(--panel);border:1px solid var(--bord);border-radius:16px;padding:22px;margin-bottom:16px}
+.join-screen h3{font-size:17px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px;text-align:center}
+.join-label{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:8px;opacity:.8}
+
+/* Flag type picker */
+.flag-type-row{display:flex;gap:8px;margin-bottom:14px}
+.ftype-btn{
+  flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:.04em;
+  background:rgba(255,255,255,.06);border:1px solid var(--bord);color:var(--chalk-dim);
+}
+.ftype-btn.on{background:rgba(255,200,61,.14);border-color:rgba(255,200,61,.4);color:var(--amber)}
+
+/* Country selector */
+.ctry-search{
+  width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--bord);
+  background:rgba(0,0,0,.35);color:var(--chalk);font-family:var(--mono);font-size:13px;
+  outline:none;margin-bottom:8px;
+}
+.ctry-search:focus{border-color:var(--amber)}
+.ctry-scroll{max-height:180px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:6px}
+.ctry-opt{
+  display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;cursor:pointer;
+  background:rgba(255,255,255,.04);border:1px solid var(--bord);font-size:12px;font-weight:700;
+  transition:background .12s;
+}
+.ctry-opt:hover{background:rgba(255,255,255,.09)}
+.ctry-opt.selected{background:rgba(255,200,61,.14);border-color:rgba(255,200,61,.4);color:var(--amber)}
+.ctry-opt img{width:22px;height:22px;border-radius:50%;object-fit:cover}
+
+/* Custom flag builder */
+.custom-flag-row{display:flex;gap:10px;align-items:flex-start;margin-top:4px}
+.custom-flag-row .cf-inputs{flex:1;display:flex;flex-direction:column;gap:8px}
+.cf-label{font-family:var(--mono);font-size:10px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.cf-color{width:100%;height:36px;border:none;border-radius:6px;cursor:pointer;padding:2px}
+.cf-text{
+  width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--bord);
+  background:rgba(0,0,0,.35);color:var(--chalk);font-family:var(--mono);font-size:18px;font-weight:700;
+  text-align:center;outline:none;letter-spacing:.1em;
+}
+.cf-text:focus{border-color:var(--amber)}
+.cf-preview{width:72px;height:72px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.3);background:#234;flex-shrink:0}
+.cf-preview canvas{width:100%;height:100%;display:block}
+
+/* Team picker */
+.team-pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:12px}
+.team-pick-btn{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:rgba(255,255,255,.04);border:1px solid var(--bord);border-radius:10px;
+  padding:10px 8px;cursor:pointer;transition:background .12s;
+}
+.team-pick-btn:hover{background:rgba(255,255,255,.08)}
+.team-pick-btn.selected{background:rgba(255,200,61,.12);border-color:rgba(255,200,61,.4)}
+.team-pick-btn .tp-flag{width:44px;height:44px;border-radius:50%;overflow:hidden;background:#234;border:2px solid rgba(255,255,255,.3)}
+.team-pick-btn .tp-flag img{width:100%;height:100%;object-fit:cover;display:block}
+.team-pick-btn .tp-name{font-size:12px;font-weight:800;letter-spacing:.04em;text-align:center;color:var(--chalk)}
+.team-pick-btn.selected .tp-name{color:var(--amber)}
+
+.join-submit{
+  width:100%;margin-top:16px;padding:13px;border-radius:10px;background:var(--amber);
+  color:#173015;font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+}
+
+/* ---- Büyük tık butonu ---- */
+.click-area{text-align:center;margin-bottom:16px}
+.big-click-btn{
+  width:clamp(120px,35vw,180px);height:clamp(120px,35vw,180px);border-radius:50%;
+  background:var(--amber);color:#173015;
+  font-family:'Lilita One',cursive;font-size:clamp(18px,4.5vw,26px);letter-spacing:.06em;
+  border:5px solid rgba(255,255,255,.4);
+  box-shadow:0 6px 24px rgba(255,200,61,.45),0 2px 8px rgba(0,0,0,.4);
+  transition:transform .07s;user-select:none;
+}
+.big-click-btn:active{transform:scale(.91)}
+.big-click-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.click-caption{font-family:var(--mono);font-size:11px;color:var(--chalk-dim);margin-top:8px;letter-spacing:.06em}
+
+/* ---- Paylaş kutusu ---- */
+.share-box{
+  background:var(--panel);border:1px solid var(--bord);border-radius:10px;
+  padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;
+}
+.share-box .sb-url{
+  flex:1;font-family:var(--mono);font-size:12px;color:var(--chalk-dim);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.sb-copy{
+  flex-shrink:0;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--amber);background:rgba(255,200,61,.12);border:1px solid rgba(255,200,61,.3);
+  border-radius:999px;padding:5px 12px;
+}
+
+footer{
+  position:fixed;bottom:0;left:0;right:0;text-align:center;z-index:50;
+  font-family:var(--mono);font-size:10px;color:var(--chalk-dim);
+  background:var(--panel-2);padding:5px;border-top:1px solid var(--bord);letter-spacing:.04em;
+}
+</style>
+</head>
+<body>
+
+<div class="countdown-overlay off" id="countdownOverlay">
+  <div class="countdown-label">YARIŞA HAZIRLAN</div>
+  <div class="countdown-num" id="countdownNum">10</div>
+  <div class="countdown-label" id="countdownSub">saniye sonra başlıyor</div>
+</div>
+
+<div class="winner-overlay off" id="winnerOverlay">
+  <div class="winner-trophy">🏆</div>
+  <div class="winner-title" id="winnerTitle">GALİP!</div>
+  <div class="winner-name" id="winnerNameEl"></div>
+  <button class="winner-btn" onclick="location.href='/'">Ana Sayfaya Dön</button>
+  <button class="winner-btn" style="background:transparent;border:1px solid var(--bord);color:var(--chalk-dim)" onclick="location.href='/profile.html'">Profilimi Gör</button>
+</div>
+
+<header>
+  <a href="/" class="back-btn">← Geri</a>
+  <div class="hdr-info">
+    <div class="race-id" id="hdrRaceId"></div>
+    <div class="race-meta" id="hdrMeta"></div>
+  </div>
+  <button class="share-btn" id="shareBtnHdr">Paylaş</button>
+</header>
+
+<main>
+  <div class="status-bar waiting" id="statusBar">Bekleniyor...</div>
+
+  <!-- Katılma ekranı (henüz katılmamışsa gösterilir) -->
+  <div class="join-screen" id="joinScreen" style="display:none">
+    <h3 id="joinTitle">Yarışa Katıl</h3>
+    <!-- Individual: flag seçimi -->
+    <div id="joinIndividual">
+      <div class="join-label">Bayrak Türü</div>
+      <div class="flag-type-row">
+        <button class="ftype-btn on" data-ft="country" id="ftCountry">🌍 Ülke Bayrağı</button>
+        <button class="ftype-btn" data-ft="custom" id="ftCustom">🎨 Özel Bayrak</button>
+      </div>
+      <div id="countryPick">
+        <input class="ctry-search" id="ctrySearch" placeholder="Ülke ara..." autocomplete="off">
+        <div class="ctry-scroll" id="ctryScroll"></div>
+      </div>
+      <div id="customPick" style="display:none">
+        <div class="custom-flag-row">
+          <div class="cf-inputs">
+            <div><div class="cf-label">Renk</div><input type="color" class="cf-color" id="cfColor" value="#1a6b4a"></div>
+            <div><div class="cf-label">Metin (maks 3)</div><input class="cf-text" id="cfText" maxlength="3" placeholder="⚡" autocomplete="off"></div>
+          </div>
+          <div class="cf-preview"><canvas id="cfPreviewCanvas" width="240" height="240"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <!-- Team: takım seçimi -->
+    <div id="joinTeam" style="display:none">
+      <div class="join-label">Takım Seç</div>
+      <div class="team-pick-grid" id="teamPickGrid"></div>
+    </div>
+    <button class="join-submit" id="joinSubmit">Katıl</button>
+  </div>
+
+  <!-- Paylaş kutusu -->
+  <div class="share-box" id="shareBox" style="display:none">
+    <span class="sb-url" id="shareUrl"></span>
+    <button class="sb-copy" id="sbCopy">Kopyala</button>
+  </div>
+
+  <!-- Takım yarışı görünümü -->
+  <div class="teams-grid" id="teamsGrid"></div>
+
+  <!-- Bireysel yarış görünümü -->
+  <div class="racers-grid" id="racersGrid"></div>
+
+  <!-- Lobideki oyuncular listesi (bekleme sırasında) -->
+  <div class="lobby" id="lobbyPanel" style="display:none">
+    <h3>Oyuncular (<span id="lobbyCount">0</span> / <span id="lobbyMax">0</span>)</h3>
+    <div class="player-list" id="playerList"></div>
+  </div>
+
+  <!-- Büyük tık butonu -->
+  <div class="click-area">
+    <button class="big-click-btn" id="bigClick" disabled>TIK!</button>
+    <div class="click-caption" id="clickCaption">Yarış başladığında aktif olur</div>
+  </div>
+</main>
+
+<footer>CLICKRUSHER · bayraklar stilize çizimdir · resmi turnuva markalarıyla bağı yoktur</footer>
+
+<script src="/flags.js"></script>
+<script>
+const TEAMS_MAP = {
+  MEX:'Meksika',RSA:'Güney Afrika',KOR:'Güney Kore',CZE:'Çekya',
+  CAN:'Kanada',BIH:'Bosna Hersek',QAT:'Katar',SUI:'İsviçre',
+  SCO:'İskoçya',MAR:'Fas',BRA:'Brezilya',HAI:'Haiti',
+  USA:'ABD',PAR:'Paraguay',AUS:'Avustralya',TUR:'Türkiye',
+  GER:'Almanya',CIV:'Fildişi Sahili',CUW:'Curaçao',ECU:'Ekvador',
+  NED:'Hollanda',JPN:'Japonya',SWE:'İsveç',TUN:'Tunus',
+  ESP:'İspanya',CPV:'Yeşil Burun',KSA:'Suudi Arabistan',URU:'Uruguay',
+  BEL:'Belçika',EGY:'Mısır',IRN:'İran',NZL:'Yeni Zelanda',
+  FRA:'Fransa',NOR:'Norveç',SEN:'Senegal',IRQ:'Irak',
+  ARG:'Arjantin',AUT:'Avusturya',JOR:'Ürdün',ALG:'Cezayir',
+  POR:'Portekiz',UZB:'Özbekistan',COL:'Kolombiya',COD:'DR Kongo',
+  ENG:'İngiltere',GHA:'Gana',PAN:'Panama',CRO:'Hırvatistan',
+};
+const CTRY_CODES = Object.keys(TEAMS_MAP);
+
+const params    = new URLSearchParams(location.search);
+const raceId    = params.get('id');
+const deviceId  = localStorage.getItem('ta26_device');
+const myName    = localStorage.getItem('ta26_name');
+
+if (!raceId) location.href = '/';
+if (!myName || !deviceId) {
+  localStorage.setItem('race_pending', raceId);
+  location.href = '/';
+}
+
+let S = null;                // race state from SSE
+let myFlag = { type:'country', value:'TUR' };
+let selectedTeamId = null;
+let joined = false;
+let clickCount = 0;
+let pendingClicks = 0;
+let flushTimer = null;
+
+const $ = id => document.getElementById(id);
+
+function fmt(n){ return Number(n).toLocaleString('tr-TR'); }
+
+// ---- Header setup ----
+$('hdrRaceId').textContent = 'YARIŞMA #' + raceId;
+
+const shareUrl = location.origin + '/race.html?id=' + raceId;
+$('shareUrl').textContent = shareUrl;
+$('shareBox').style.display = '';
+
+function doCopy(){ navigator.clipboard.writeText(shareUrl).catch(()=>{}); const btn=$('sbCopy'); btn.textContent='Kopyalandı!'; setTimeout(()=>btn.textContent='Kopyala',1800); }
+$('sbCopy').onclick = doCopy;
+$('shareBtnHdr').onclick = doCopy;
+
+// ---- Flag rendering helper ----
+function flagImgEl(flagObj, size=40){
+  const img = document.createElement('img');
+  img.width = size; img.height = size; img.style.cssText='display:block';
+  if(flagObj && flagObj.type==='country'){
+    img.src = window.drawCountryFlag(flagObj.value, flagObj.value);
+    img.alt = TEAMS_MAP[flagObj.value] || flagObj.value;
+  } else if(flagObj){
+    img.src = window.drawCustomFlag(flagObj.value && flagObj.value.color, flagObj.value && flagObj.value.text);
+    img.alt = flagObj.value && flagObj.value.text || '?';
+  } else {
+    img.src = window.drawCustomFlag('#234','?');
+  }
+  return img;
+}
+
+// ---- Country picker ----
+let selectedCountry = 'TUR';
+function buildCountryPicker(){
+  const scroll = $('ctryScroll');
+  scroll.innerHTML = '';
+  const q = ($('ctrySearch').value||'').toLowerCase();
+  CTRY_CODES.filter(c=>{
+    const n = (TEAMS_MAP[c]||'').toLowerCase();
+    return !q || c.toLowerCase().includes(q) || n.includes(q);
+  }).forEach(code=>{
+    const btn = document.createElement('button');
+    btn.className = 'ctry-opt' + (code===selectedCountry?' selected':'');
+    const img = document.createElement('img');
+    img.src = window.drawCountryFlag(code,code);
+    img.width=22;img.height=22;img.style.cssText='border-radius:50%;object-fit:cover';
+    btn.appendChild(img);
+    btn.appendChild(document.createTextNode(TEAMS_MAP[code]||code));
+    btn.onclick = ()=>{
+      selectedCountry = code;
+      myFlag = { type:'country', value:code };
+      scroll.querySelectorAll('.ctry-opt').forEach(b=>b.classList.toggle('selected',b===btn));
+    };
+    scroll.appendChild(btn);
+  });
+}
+$('ctrySearch').addEventListener('input', buildCountryPicker);
+buildCountryPicker();
+
+// ---- Custom flag preview ----
+function updateCustomPreview(){
+  const color = $('cfColor').value;
+  const text  = $('cfText').value || '⚡';
+  const cv    = $('cfPreviewCanvas');
+  const src   = window.drawCustomFlag(color, text);
+  const img   = new Image();
+  img.onload  = ()=>{ const ctx=cv.getContext('2d'); ctx.clearRect(0,0,240,240); ctx.drawImage(img,0,0,240,240); };
+  img.src     = src;
+  myFlag = { type:'custom', value:{ color, text } };
+}
+$('cfColor').addEventListener('input', updateCustomPreview);
+$('cfText').addEventListener('input', updateCustomPreview);
+updateCustomPreview();
+
+// ---- Flag type toggle ----
+let activeFlipType = 'country';
+$('ftCountry').onclick = ()=>{ activeFlipType='country'; $('ftCountry').classList.add('on'); $('ftCustom').classList.remove('on'); $('countryPick').style.display=''; $('customPick').style.display='none'; myFlag={type:'country',value:selectedCountry}; };
+$('ftCustom').onclick  = ()=>{ activeFlipType='custom';  $('ftCustom').classList.add('on'); $('ftCountry').classList.remove('on'); $('countryPick').style.display='none'; $('customPick').style.display=''; updateCustomPreview(); };
+
+// ---- SSE ----
+function connectSSE(){
+  const es = new EventSource(`/api/race/${raceId}/stream`);
+  es.onmessage = e => {
+    try { S = JSON.parse(e.data); render(); } catch {}
+  };
+  es.onerror = ()=>{ es.close(); setTimeout(connectSSE, 3000); };
+}
+
+// ---- Main render ----
+let lastStatus = null;
+let countdownInterval = null;
+
+function render(){
+  if(!S) return;
+  $('hdrMeta').textContent = modeLabel(S) + ' · ' + winLabel(S);
+
+  // Check if I'm already in the race
+  if(!joined){
+    const me = S.players.find(p=>p.deviceId===deviceId);
+    if(me) joined = true;
+  }
+
+  // Show/hide join screen
+  if(!joined && S.status==='waiting'){
+    $('joinScreen').style.display='';
+    renderJoinUI();
+  } else {
+    $('joinScreen').style.display='none';
+  }
+
+  // Lobby panel (waiting, show all players)
+  if(S.status==='waiting'){
+    renderLobby();
+  } else {
+    $('lobbyPanel').style.display='none';
+  }
+
+  // Countdown overlay
+  if(S.status==='countdown'){
+    $('countdownOverlay').classList.remove('off');
+    updateCountdown();
+    if(!countdownInterval) countdownInterval = setInterval(updateCountdown, 250);
+  } else {
+    $('countdownOverlay').classList.add('off');
+    if(countdownInterval){ clearInterval(countdownInterval); countdownInterval=null; }
+  }
+
+  // Racers/teams display
+  if(S.mode==='team'){
+    $('teamsGrid').style.display='';
+    $('racersGrid').style.display='none';
+    renderTeams();
+  } else {
+    $('racersGrid').style.display='';
+    $('teamsGrid').style.display='none';
+    if(S.status!=='waiting') renderRacers();
+  }
+
+  // Click button
+  const canClick = joined && S.status==='active';
+  $('bigClick').disabled = !canClick;
+  $('clickCaption').textContent = canClick ? `Tıkladın: ${fmt(localClicks())}` : (S.status==='waiting'?'Yarış başladığında aktif olur':(S.status==='countdown'?'Neredeyse...':'–'));
+
+  // Status bar
+  const sbar = $('statusBar');
+  sbar.className = 'status-bar ' + S.status;
+  sbar.textContent = statusText();
+
+  // Timer countdown in status bar
+  if(S.status==='active' && S.winType==='time' && S.endAt){
+    const left = Math.max(0, S.endAt - Date.now());
+    sbar.textContent = '⏱ ' + fmtMs(left) + ' kaldı';
+  }
+
+  // Winner overlay
+  if(S.status==='finished' && lastStatus!=='finished'){
+    const me = S.players.find(p=>p.deviceId===deviceId);
+    const isWinner = S.mode==='individual' ? S.winner===deviceId : (me && me.teamId===S.winner);
+    $('winnerTitle').textContent = isWinner ? '🏆 GALİP!' : '🎯 TAMAMLANDI';
+    $('winnerNameEl').textContent = isWinner ? 'Tebrikler!' : `Kazanan: ${S.winnerName||'–'}`;
+    $('winnerOverlay').classList.remove('off');
+  }
+
+  lastStatus = S.status;
+}
+
+function renderJoinUI(){
+  if(S.mode==='team'){
+    $('joinIndividual').style.display='none';
+    $('joinTeam').style.display='';
+    $('joinTitle').textContent='Takım Seç ve Katıl';
+    renderTeamPicker();
+  } else {
+    $('joinIndividual').style.display='';
+    $('joinTeam').style.display='none';
+    $('joinTitle').textContent='Bayrak Seç ve Katıl';
+  }
+}
+
+function renderTeamPicker(){
+  const grid = $('teamPickGrid');
+  grid.innerHTML='';
+  (S.teams||[]).forEach(t=>{
+    const btn = document.createElement('button');
+    btn.className='team-pick-btn'+(t.id===selectedTeamId?' selected':'');
+    const flagWrap=document.createElement('div'); flagWrap.className='tp-flag';
+    flagWrap.appendChild(flagImgEl(t.flag,44));
+    const nameEl=document.createElement('div'); nameEl.className='tp-name'; nameEl.textContent=t.name;
+    btn.appendChild(flagWrap); btn.appendChild(nameEl);
+    btn.onclick=()=>{
+      selectedTeamId=t.id;
+      grid.querySelectorAll('.team-pick-btn').forEach(b=>b.classList.toggle('selected',b===btn));
+    };
+    grid.appendChild(btn);
+    if(!selectedTeamId){ selectedTeamId=t.id; btn.classList.add('selected'); }
+  });
+}
+
+function renderLobby(){
+  $('lobbyPanel').style.display='';
+  $('lobbyCount').textContent=S.players.length;
+  $('lobbyMax').textContent=S.maxPlayers;
+  const list=$('playerList');
+  list.innerHTML='';
+  S.players.forEach(p=>{
+    const row=document.createElement('div');
+    row.className='player-row'+(p.deviceId===deviceId?' me':'');
+    const flagWrap=document.createElement('div'); flagWrap.className='pflag';
+    flagWrap.appendChild(flagImgEl(p.flag,36));
+    const name=document.createElement('div'); name.className='pname';
+    name.textContent=(p.deviceId===deviceId?'⭐ ':'')+p.name;
+    row.appendChild(flagWrap); row.appendChild(name);
+    list.appendChild(row);
+  });
+}
+
+function renderTeams(){
+  const grid=$('teamsGrid');
+  const prevCount=grid.children.length;
+  const target=Number(S.winValue);
+  S.teams.forEach((t,i)=>{
+    let card=grid.children[i];
+    if(!card){ card=document.createElement('div'); card.className='team-card'; grid.appendChild(card); }
+    const isWinning = S.status==='finished' ? S.winner===t.id : (S.status==='active'&&S.teams.length>0&&t.clicks===Math.max(...S.teams.map(x=>x.clicks||0)));
+    card.className='team-card'+(isWinning?' winning':'');
+    const pct = S.winType==='clicks' ? Math.min(100,(t.clicks||0)/target*100) : 0;
+    const members=S.players.filter(p=>p.teamId===t.id).map(p=>p.name).join(', ')||'–';
+    card.innerHTML=`
+      <div class="team-flag">${flagImgEl(t.flag,64).outerHTML}</div>
+      <div class="team-name">${t.name}</div>
+      <div class="team-clicks">${fmt(t.clicks||0)}</div>
+      <div class="team-members">${members}</div>
+      ${S.winType==='clicks'?`<div class="team-progress"><div class="team-fill" style="width:${pct}%"></div></div>`:''}
+    `;
+  });
+  while(grid.children.length > S.teams.length) grid.removeChild(grid.lastChild);
+}
+
+function renderRacers(){
+  const grid=$('racersGrid');
+  const sorted=[...S.players].sort((a,b)=>(b.clicks||0)-(a.clicks||0));
+  const target=Number(S.winValue);
+  sorted.forEach((p,rank)=>{
+    const isMe=p.deviceId===deviceId;
+    const pct=S.winType==='clicks'?Math.min(100,(p.clicks||0)/target*100):0;
+    let card=grid.querySelector(`[data-pid="${p.deviceId}"]`);
+    if(!card){
+      card=document.createElement('div');
+      card.className='racer-card';
+      card.dataset.pid=p.deviceId;
+      grid.appendChild(card);
+    }
+    const isWinner=S.status==='finished'&&S.winner===p.deviceId;
+    card.className='racer-card'+(isWinner?' winner':'')+(isMe?' me':'');
+    card.innerHTML=`
+      <div class="racer-rank ${rank<3?'r'+(rank+1):''}">#${rank+1}</div>
+      <div class="racer-flag">${flagImgEl(p.flag,60).outerHTML}</div>
+      <div class="racer-name">${isMe?'⭐ ':''}${p.name}</div>
+      <div class="racer-clicks">${fmt(p.clicks||0)}</div>
+      ${S.winType==='clicks'?`<div class="racer-progress"><div class="racer-fill" style="width:${pct}%"></div></div>`:''}
+    `;
+  });
+  // Remove cards for players who left (shouldn't happen but safety)
+  Array.from(grid.children).forEach(c=>{ if(!sorted.find(p=>p.deviceId===c.dataset.pid)) c.remove(); });
+}
+
+function updateCountdown(){
+  if(!S || !S.startAt) return;
+  const left = Math.max(0, Math.ceil((S.startAt - Date.now()) / 1000));
+  $('countdownNum').textContent = left || 'GİT!';
+  if(left===0) $('countdownSub').textContent='';
+}
+
+function statusText(){
+  if(!S) return '...';
+  if(S.status==='waiting') return `Oyuncular bekleniyor… (${S.players.length}/${S.maxPlayers})`;
+  if(S.status==='countdown') return 'Hazırlan!';
+  if(S.status==='active') return S.winType==='time'?'Yarış sürüyor!':'Yarış sürüyor!';
+  if(S.status==='finished') return '🏁 Yarış bitti!';
+  return '';
+}
+
+function modeLabel(r){ return r.mode==='team'?'Takımlı':'Bireysel'; }
+function winLabel(r){ return r.winType==='clicks'?`İlk ${fmt(r.winValue)} tık`:`${r.winValue}sn en iyi`; }
+function fmtMs(ms){ const s=Math.ceil(ms/1000); return s<60?s+'sn':`${Math.floor(s/60)}dk ${String(s%60).padStart(2,'0')}sn`; }
+
+// ---- Optimistic click count ----
+let _localAdded = 0;
+function localClicks(){
+  const me = S && S.players.find(p=>p.deviceId===deviceId);
+  return (me?me.clicks:0) + _localAdded;
+}
+
+// ---- Click submit ----
+$('joinSubmit').onclick = async ()=>{
+  const flag  = myFlag;
+  const tId   = S && S.mode==='team' ? selectedTeamId : undefined;
+  if(S && S.mode==='team' && !tId){ alert('Lütfen bir takım seç.'); return; }
+  $('joinSubmit').disabled=true; $('joinSubmit').textContent='Katılıyor...';
+  try {
+    const res = await fetch(`/api/race/${raceId}/join`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({device:deviceId,name:myName,flag,teamId:tId}),
+    });
+    const data = await res.json();
+    if(data.ok){ joined=true; $('joinScreen').style.display='none'; }
+    else { alert(data.reason==='not_logged_in'?'Giriş yapman gerekiyor!':data.reason||'Hata'); }
+  } catch{ alert('Bağlantı hatası'); }
+  $('joinSubmit').disabled=false; $('joinSubmit').textContent='Katıl';
+};
+
+$('bigClick').onclick = ()=>{
+  if(!S||S.status!=='active'||!joined) return;
+  _localAdded++;
+  pendingClicks++;
+  $('clickCaption').textContent=`Tıkladın: ${fmt(localClicks())}`;
+  if(!flushTimer) flushTimer=setTimeout(flushClicks,200);
+};
+
+async function flushClicks(){
+  flushTimer=null;
+  if(!pendingClicks) return;
+  const n=Math.min(pendingClicks,10);
+  pendingClicks=0;_localAdded=0;
+  try {
+    await fetch(`/api/race/${raceId}/click`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({device:deviceId,n}),
+    });
+  } catch {}
+}
+
+// ---- Timer to update status bar for time-based races ----
+setInterval(()=>{
+  if(!S||S.status!=='active'||S.winType!=='time'||!S.endAt) return;
+  const left=Math.max(0,S.endAt-Date.now());
+  const sbar=$('statusBar');
+  sbar.textContent='⏱ '+fmtMs(left)+' kaldı';
+  if(left===0 && S.status==='active') S.status='finished'; // Optimistic — SSE will confirm
+},500);
+
+connectSSE();
+</script>
+</body>
+</html>

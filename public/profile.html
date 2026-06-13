@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Profilim — CLICKRUSHER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Saira+Condensed:wght@600;800&family=Chivo+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --grass1:#2E7D33;--grass2:#27702C;
+  --panel:rgba(6,24,12,.86);--panel-2:rgba(10,34,18,.92);
+  --bord:rgba(255,255,255,.16);--chalk:#F2F7F0;--chalk-dim:#BFD6C4;
+  --amber:#FFC83D;--signal:#FF4D42;
+  --display:'Saira Condensed',system-ui,sans-serif;
+  --mono:'Chivo Mono',ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%}
+body{
+  background:repeating-linear-gradient(90deg,var(--grass1) 0 72px,var(--grass2) 72px 144px);
+  color:var(--chalk);font-family:var(--display);overflow-x:hidden;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+img{user-select:none}
+.fc{border-radius:50%;object-fit:cover;background:#234;border:2px solid rgba(255,255,255,.9);
+  box-shadow:0 2px 6px rgba(0,0,0,.35);display:block;flex-shrink:0}
+
+header{
+  position:sticky;top:0;z-index:50;
+  background:var(--panel-2);backdrop-filter:blur(8px);
+  border-bottom:2px solid var(--bord);
+  padding:12px 16px;display:flex;align-items:center;gap:12px;
+}
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--chalk-dim);background:rgba(255,255,255,.07);
+  border:1px solid var(--bord);border-radius:999px;padding:7px 14px;
+  text-decoration:none;
+}
+.back-btn:hover{color:var(--chalk)}
+.hdr-title{font-family:'Lilita One',cursive;font-size:20px;color:var(--chalk)}
+
+main{max-width:720px;margin:0 auto;padding:20px 14px 80px}
+
+/* --- Profil kartı --- */
+.pcard{
+  background:var(--panel);border:1px solid var(--bord);border-radius:16px;
+  padding:22px 18px;display:flex;flex-direction:column;align-items:center;gap:12px;
+  margin-bottom:20px;text-align:center;
+}
+.pcard .avatar{
+  width:80px;height:80px;border-radius:50%;background:var(--amber);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Lilita One',cursive;font-size:36px;color:#173015;
+  border:3px solid var(--amber);box-shadow:0 0 20px rgba(255,200,61,.3);
+}
+.pcard .pname{font-family:'Lilita One',cursive;font-size:28px;color:var(--amber)}
+.pcard .pmeta{font-family:var(--mono);font-size:12px;color:var(--chalk-dim)}
+.pstats{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.pstats .stat{text-align:center}
+.pstats .stat .val{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--chalk);display:block}
+.pstats .stat .lbl{font-family:var(--mono);font-size:10px;color:var(--chalk-dim);letter-spacing:.1em;text-transform:uppercase}
+
+/* --- Bölüm başlığı --- */
+.section{margin-bottom:20px}
+.sec-head{
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--chalk-dim);
+  margin-bottom:10px;opacity:.75;
+}
+
+/* --- Ülke istatistikleri --- */
+.country-grid{display:flex;flex-wrap:wrap;gap:8px}
+.ctry-item{
+  display:flex;align-items:center;gap:7px;
+  background:var(--panel);border:1px solid var(--bord);border-radius:8px;
+  padding:6px 10px;
+}
+.ctry-item img{width:28px;height:28px}
+.ctry-item .ctry-name{font-size:12px;font-weight:700;letter-spacing:.04em}
+.ctry-item .ctry-n{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber)}
+
+/* --- Yarış geçmişi --- */
+.race-list{display:flex;flex-direction:column;gap:8px}
+.race-item{
+  background:var(--panel);border:1px solid var(--bord);border-radius:10px;
+  padding:10px 14px;display:flex;align-items:center;gap:12px;
+}
+.race-badge{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.race-badge.win{background:rgba(255,200,61,.18);border:1px solid rgba(255,200,61,.4)}
+.race-badge.lose{background:rgba(255,255,255,.06);border:1px solid var(--bord)}
+.race-info{flex:1;min-width:0}
+.race-info .ri-top{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.race-info .ri-top .result-tag{
+  font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;
+  padding:1px 7px;border-radius:999px;
+}
+.result-tag.win{background:rgba(255,200,61,.2);color:var(--amber);border:1px solid rgba(255,200,61,.4)}
+.result-tag.lose{background:rgba(255,255,255,.07);color:var(--chalk-dim);border:1px solid var(--bord)}
+.race-info .ri-bot{font-family:var(--mono);font-size:11px;color:var(--chalk-dim);margin-top:3px}
+.race-score{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--amber);flex-shrink:0}
+
+.empty{
+  background:var(--panel);border:1px solid var(--bord);border-radius:10px;
+  padding:20px;text-align:center;font-family:var(--mono);font-size:13px;color:var(--chalk-dim);
+}
+
+footer{
+  position:fixed;bottom:0;left:0;right:0;text-align:center;z-index:50;
+  font-family:var(--mono);font-size:10px;color:var(--chalk-dim);
+  background:var(--panel-2);padding:5px;border-top:1px solid var(--bord);letter-spacing:.04em;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="back-btn">← Anasayfa</a>
+  <span class="hdr-title">Profilim</span>
+</header>
+
+<main>
+  <div class="pcard" id="pcard">
+    <div style="font-family:var(--mono);font-size:13px;color:var(--chalk-dim)">Yükleniyor...</div>
+  </div>
+
+  <div class="section" id="countriesSection" style="display:none">
+    <div class="sec-head">Tıkladığım Ülkeler</div>
+    <div class="country-grid" id="countriesGrid"></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-head">Yarış Geçmişi</div>
+    <div class="race-list" id="raceList">
+      <div class="empty">Henüz yarış geçmişi yok</div>
+    </div>
+  </div>
+</main>
+
+<footer>CLICKRUSHER · bayraklar stilize çizimdir · resmi turnuva markalarıyla bağı yoktur</footer>
+
+<script src="/flags.js"></script>
+<script>
+const TEAMS_MAP = {
+  MEX:'Meksika',RSA:'Güney Afrika',KOR:'Güney Kore',CZE:'Çekya',
+  CAN:'Kanada',BIH:'Bosna Hersek',QAT:'Katar',SUI:'İsviçre',
+  SCO:'İskoçya',MAR:'Fas',BRA:'Brezilya',HAI:'Haiti',
+  USA:'ABD',PAR:'Paraguay',AUS:'Avustralya',TUR:'Türkiye',
+  GER:'Almanya',CIV:'Fildişi Sahili',CUW:'Curaçao',ECU:'Ekvador',
+  NED:'Hollanda',JPN:'Japonya',SWE:'İsveç',TUN:'Tunus',
+  ESP:'İspanya',CPV:'Yeşil Burun',KSA:'Suudi Arabistan',URU:'Uruguay',
+  BEL:'Belçika',EGY:'Mısır',IRN:'İran',NZL:'Yeni Zelanda',
+  FRA:'Fransa',NOR:'Norveç',SEN:'Senegal',IRQ:'Irak',
+  ARG:'Arjantin',AUT:'Avusturya',JOR:'Ürdün',ALG:'Cezayir',
+  POR:'Portekiz',UZB:'Özbekistan',COL:'Kolombiya',COD:'DR Kongo',
+  ENG:'İngiltere',GHA:'Gana',PAN:'Panama',CRO:'Hırvatistan',
+};
+
+const deviceId   = localStorage.getItem('ta26_device');
+const storedName = localStorage.getItem('ta26_name');
+
+function fmt(n){return Number(n).toLocaleString('tr-TR')}
+function fmtDate(ts){
+  if(!ts) return '–';
+  return new Date(ts).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+}
+function fmtDateShort(ts){
+  if(!ts) return '';
+  return new Date(ts).toLocaleDateString('tr-TR',{day:'numeric',month:'short'});
+}
+
+async function load(){
+  if(!deviceId || !storedName){
+    document.getElementById('pcard').innerHTML='<div style="font-family:var(--mono);font-size:13px;color:var(--signal)">Giriş yapmadan profil görüntülenemez.</div>';
+    return;
+  }
+  try {
+    const res  = await fetch(`/api/profile?device=${encodeURIComponent(deviceId)}`);
+    const data = await res.json();
+    if(!data.ok){ throw new Error('api error'); }
+    renderProfile(data);
+  } catch(e) {
+    document.getElementById('pcard').innerHTML='<div style="font-family:var(--mono);font-size:13px;color:var(--signal)">Yüklenemedi, tekrar dene.</div>';
+  }
+}
+
+function renderProfile(data){
+  const name     = data.name || storedName || 'Kullanıcı';
+  const initial  = name.charAt(0).toUpperCase();
+  const totalClicks = data.total;
+  const joinDate = fmtDate(data.createdAt);
+
+  // Profil kartı
+  const wins  = (data.raceHistory||[]).filter(r=>r.result==='win').length;
+  const races = (data.raceHistory||[]).length;
+  document.getElementById('pcard').innerHTML = `
+    <div class="avatar">${initial}</div>
+    <div class="pname">${name}</div>
+    <div class="pmeta">Katılım: ${joinDate}</div>
+    <div class="pstats">
+      <div class="stat"><span class="val">${fmt(totalClicks)}</span><span class="lbl">Toplam Tık</span></div>
+      <div class="stat"><span class="val">${races}</span><span class="lbl">Yarış</span></div>
+      <div class="stat"><span class="val">${wins}</span><span class="lbl">Galibiyet</span></div>
+    </div>`;
+
+  // Ülke istatistikleri
+  const countries = Object.entries(data.countries || {})
+    .filter(([,n]) => n > 0)
+    .sort((a,b) => b[1]-a[1]);
+
+  if(countries.length > 0){
+    const secEl = document.getElementById('countriesSection');
+    const gridEl = document.getElementById('countriesGrid');
+    secEl.style.display = '';
+    gridEl.innerHTML = countries.map(([code, n]) => {
+      const imgSrc = window.drawCountryFlag(code, code);
+      const cName  = TEAMS_MAP[code] || code;
+      return `<div class="ctry-item">
+        <img class="fc" src="${imgSrc}" width="28" height="28" alt="${cName}">
+        <div>
+          <div class="ctry-name">${cName}</div>
+          <div class="ctry-n">${fmt(n)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Yarış geçmişi
+  const raceList = document.getElementById('raceList');
+  if(!data.raceHistory || !data.raceHistory.length){
+    raceList.innerHTML = '<div class="empty">Henüz yarış geçmişi yok</div>';
+    return;
+  }
+  raceList.innerHTML = data.raceHistory.map(r => {
+    const isWin   = r.result === 'win';
+    const modeLabel = r.mode === 'team' ? '🤝 Takımlı' : '🏃 Bireysel';
+    const dateStr   = fmtDateShort(r.finishedAt);
+    const winnerStr = isWin ? 'Kazandın!' : `Kazanan: ${r.winnerName || '–'}`;
+    return `<div class="race-item">
+      <div class="race-badge ${isWin?'win':'lose'}">${isWin?'🏆':'🎯'}</div>
+      <div class="race-info">
+        <div class="ri-top">
+          <span class="result-tag ${isWin?'win':'lose'}">${isWin?'GALİP':'KATILIM'}</span>
+          ${modeLabel} · ${winnerStr}
+        </div>
+        <div class="ri-bot">Yarış #${r.raceId} · ${dateStr}</div>
+      </div>
+      <div class="race-score">${fmt(r.score)}<br><span style="font-size:9px;color:var(--chalk-dim)">TIK</span></div>
+    </div>`;
+  }).join('');
+}
+
+load();
+</script>
+</body>
+</html>
