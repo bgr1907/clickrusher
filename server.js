@@ -55,10 +55,20 @@ function sanitizeName(name) {
 
 // ---- Durum snapshot ----
 async function buildState(deviceId, username) {
+  // Otomatik güncellenen fikstürleri Redis'ten al; yoksa statik dosyaya dön
+  let activeFixtures = fixtures;
+  try {
+    const cached = await redis.get('live:fixtures');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed.length > 0) activeFixtures = parsed;
+    }
+  } catch {}
+
   const [scores, liveScores, ...fixData] = await Promise.all([
     counters.getCountryScores(TEAMS),
-    scoresLib.getLiveScores(fixtures),
-    ...fixtures.flatMap(f => [
+    scoresLib.getLiveScores(activeFixtures),
+    ...activeFixtures.flatMap(f => [
       counters.getMatchCounters(f.id),
       counters.getMatchTop10(f.id, 'A'),
       counters.getMatchTop10(f.id, 'B'),
@@ -70,7 +80,7 @@ async function buildState(deviceId, username) {
     countryTops[t.c] = await counters.getCountryTop10(t.c);
   }));
 
-  const fixtureStates = fixtures.map((f, i) => ({
+  const fixtureStates = activeFixtures.map((f, i) => ({
     id: f.id, a: f.a, b: f.b, ko: f.ko, utc: f.utc,
     counters: fixData[i * 3],
     topA: fixData[i * 3 + 1],
