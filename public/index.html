@@ -49,7 +49,7 @@ header{
 }
 .brand{display:flex;align-items:center;gap:8px;justify-content:center;position:relative;padding:4px 0}
 .brand-link{text-decoration:none;color:inherit;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1}
-.site-title{font-family:'Lilita One',cursive;font-size:clamp(22px,5.5vw,32px);letter-spacing:.06em;color:var(--chalk);display:block}
+.site-title{font-family:'Lilita One',cursive;font-size:clamp(28px,7vw,42px);letter-spacing:.06em;color:var(--chalk);display:block}
 .site-sub{font-family:'Lilita One',cursive;font-size:clamp(9px,2vw,12px);letter-spacing:.1em;color:var(--amber);opacity:.9;display:block}
 .tz-wrap{
   position:absolute;right:0;top:50%;transform:translateY(-50%);
@@ -342,7 +342,6 @@ footer{
       <span class="site-title">CLICKRUSHER</span>
       <span class="site-sub">TOURNAMENT 2026</span>
     </a>
-    <span class="live"><span class="dot"></span>CANLI</span>
     <div class="tz-wrap">
       <div class="tz-clock" id="tzClock"></div>
       <div class="tz-pick" id="tzPick">
@@ -444,7 +443,7 @@ footer{
 
     <div class="panels">
       <div class="panel mePanel">
-        <h3>⭐ Senin Karnen</h3>
+        <h3>⭐ Senin İstatistiklerin</h3>
         <div class="uname" id="meName">–</div>
         <div class="meStats">
           <div>Bu Maçta<b id="meMatch">0</b></div>
@@ -951,8 +950,8 @@ function paintBattle(full){
     $('flagA').src=flagSrc(ta);$('flagB').src=flagSrc(tb);
     $('flagA').alt=ta.n;$('flagB').alt=tb.n;
     $('nameA').textContent=ta.n;$('nameB').textContent=tb.n;
-    $('topAtitle').innerHTML=`${flagImg(ta,18)} İlk 10 Tıklayıcı`;
-    $('topBtitle').innerHTML=`${flagImg(tb,18)} İlk 10 Tıklayıcı`;
+    $('topAtitle').innerHTML=`${flagImg(ta,18)} TOP 10 CLICKER`;
+    $('topBtitle').innerHTML=`${flagImg(tb,18)} TOP 10 CLICKER`;
   }
   const ls=S.liveScores[f.id];
   const lsEl=$('liveScore');
