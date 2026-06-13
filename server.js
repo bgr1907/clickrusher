@@ -89,7 +89,10 @@ async function buildState(deviceId, username) {
 
   const state = { scores, fixtures: fixtureStates, countryTops, liveScores };
   if (deviceId && username) {
-    state.me = await counters.getUserStats(deviceId, username);
+    [state.me, state.myCountries] = await Promise.all([
+      counters.getUserStats(deviceId, username),
+      counters.getUserCountryStats(deviceId),
+    ]);
   }
   return state;
 }

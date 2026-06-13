@@ -734,6 +734,9 @@ function applyState(data){
   }
   if(data.countryTops) Object.assign(S.cTops, data.countryTops);
   if(data.liveScores) Object.assign(S.liveScores, data.liveScores);
+  if(data.myCountries) {
+    for(const [c,n] of Object.entries(data.myCountries)) S.minePerTeam[c]=Number(n);
+  }
   if(data.me) {
     S.mineTotal = data.me.total ?? S.mineTotal;
   }
