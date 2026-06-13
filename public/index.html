@@ -47,7 +47,17 @@ header{
   border-bottom:2px solid var(--bord);
   padding:10px 14px 0;
 }
-.brand{display:flex;align-items:baseline;gap:8px;justify-content:center}
+.brand{display:flex;align-items:baseline;gap:8px;justify-content:center;position:relative}
+.tz-pick{
+  position:absolute;right:0;top:50%;transform:translateY(-50%);
+  display:flex;align-items:center;gap:2px;
+  background:rgba(255,255,255,.07);border:1px solid var(--bord);border-radius:8px;padding:3px;
+}
+.tz-pick button{
+  font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 7px;border-radius:5px;
+  color:var(--chalk-dim);transition:all .15s;letter-spacing:.05em;
+}
+.tz-pick button.on{background:var(--amber);color:#000}
 .brand h1{font-size:clamp(22px,5.5vw,30px);font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .brand h1 .y{color:var(--amber)}
 .brand .live{
@@ -293,6 +303,11 @@ footer{
   <div class="brand">
     <h1>Taraftar <span class="y">Arena</span> 26</h1>
     <span class="live"><span class="dot"></span>CANLI</span>
+    <div class="tz-pick" id="tzPick">
+      <button data-tz="Europe/Istanbul">TR</button>
+      <button data-tz="America/New_York">ET</button>
+      <button data-tz="America/Los_Angeles">PT</button>
+    </div>
   </div>
   <nav class="tabs">
     <button id="tabGrid" class="on">Bayrak Yarışı</button>
@@ -843,7 +858,7 @@ function buildChips(){
     const b=document.createElement('button');
     const ta=T[f.a],tb=T[f.b];
     if(!ta||!tb) return;
-    b.innerHTML=`${flagImg(ta,18)} – ${flagImg(tb,18)}<span class="kicktime">${f.ko}</span>`;
+    b.innerHTML=`${flagImg(ta,18)} – ${flagImg(tb,18)}<span class="kicktime">${formatKO(f)}</span>`;
     b.onclick=()=>{S.fix=f;buildChips();paintBattle(true)};
     if(S.fix && S.fix.id===f.id) b.classList.add('on');
     ch.appendChild(b);
@@ -925,7 +940,42 @@ $('btnA').onclick=()=>battleClick('A');
 $('btnB').onclick=()=>battleClick('B');
 document.querySelectorAll('.tapBtn[data-side]').forEach(b=>b.onclick=()=>battleClick(b.dataset.side));
 
-// Task 3: Auth modal mantığı
+// ---- Timezone ----
+let activeTZ = localStorage.getItem('tz') || 'Europe/Istanbul';
+
+function formatKO(f) {
+  if (!f.utc) return f.ko || '';
+  try {
+    const d = new Date(f.utc);
+    const timeStr = d.toLocaleTimeString('tr-TR', {
+      hour: '2-digit', minute: '2-digit', hour12: false, timeZone: activeTZ,
+    });
+    const todayStr = new Date().toLocaleDateString('tr-TR', { timeZone: activeTZ });
+    const matchStr = d.toLocaleDateString('tr-TR', { timeZone: activeTZ });
+    if (todayStr !== matchStr) {
+      const dayStr = d.toLocaleDateString('tr-TR', {
+        day: 'numeric', month: 'short', timeZone: activeTZ,
+      });
+      return `${timeStr} (${dayStr})`;
+    }
+    return timeStr;
+  } catch { return f.ko || ''; }
+}
+
+(function initTZPick() {
+  document.querySelectorAll('#tzPick button').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.tz === activeTZ);
+    btn.onclick = () => {
+      activeTZ = btn.dataset.tz;
+      localStorage.setItem('tz', activeTZ);
+      document.querySelectorAll('#tzPick button').forEach(b =>
+        b.classList.toggle('on', b.dataset.tz === activeTZ));
+      buildChips();
+    };
+  });
+})();
+
+// ---- Auth modal mantığı ----
 let authMode = 'register'; // 'register' | 'login'
 
 function showAuthMsg(msg, warn=true) {
