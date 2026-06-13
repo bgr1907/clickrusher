@@ -124,18 +124,62 @@ main{max-width:800px;margin:0 auto;padding:16px 12px 80px}
 .countdown-label{font-family:var(--mono);font-size:16px;font-weight:700;letter-spacing:.1em;color:var(--chalk-dim)}
 
 /* ---- Kazanan overlay ---- */
+/* ---- Bitiş / Özet ekranı ---- */
 .winner-overlay{
-  position:fixed;inset:0;background:rgba(4,16,8,.88);backdrop-filter:blur(6px);
-  z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
-  padding:24px;
+  position:fixed;inset:0;background:rgba(4,16,8,.95);backdrop-filter:blur(8px);
+  z-index:200;overflow-y:auto;
 }
 .winner-overlay.off{display:none}
-.winner-trophy{font-size:72px}
-.winner-title{font-family:'Lilita One',cursive;font-size:clamp(28px,7vw,42px);color:var(--amber)}
-.winner-name{font-family:'Lilita One',cursive;font-size:clamp(22px,5vw,32px)}
-.winner-btn{
-  margin-top:8px;padding:14px 32px;border-radius:999px;background:var(--amber);
-  color:#173015;font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+.winner-inner{
+  min-height:100%;display:flex;flex-direction:column;align-items:center;
+  padding:28px 16px 40px;gap:0;max-width:520px;margin:0 auto;
+}
+/* Sonuç başlığı */
+.res-header{text-align:center;margin-bottom:22px}
+.res-trophy{font-size:64px;line-height:1;display:block;margin-bottom:8px}
+.res-title{font-family:'Lilita One',cursive;font-size:clamp(26px,7vw,40px);color:var(--amber);display:block}
+.res-subtitle{font-family:var(--mono);font-size:14px;color:var(--chalk-dim);margin-top:4px;display:block}
+/* Info satırları */
+.res-info{
+  width:100%;background:var(--panel);border:1px solid var(--bord);border-radius:12px;
+  padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px 20px;margin-bottom:16px;
+}
+.res-info-item{font-family:var(--mono);font-size:11px;color:var(--chalk-dim)}
+.res-info-item strong{color:var(--chalk);display:block;font-size:13px;margin-bottom:1px}
+/* Skor tablosu */
+.res-table{width:100%;border-collapse:collapse;margin-bottom:20px}
+.res-table-head{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--chalk-dim);opacity:.7;margin-bottom:8px;text-align:left;width:100%}
+.res-row{
+  width:100%;display:flex;align-items:center;gap:10px;
+  background:var(--panel);border:1px solid var(--bord);border-radius:10px;
+  padding:10px 14px;margin-bottom:6px;
+}
+.res-row.winner-row{border-color:var(--amber);background:rgba(255,200,61,.07);box-shadow:0 0 14px rgba(255,200,61,.18)}
+.res-row.me-row{border-color:rgba(255,255,255,.28)}
+.res-rank{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--chalk-dim);width:22px;flex-shrink:0;text-align:center}
+.res-rank.gold{color:var(--amber)}
+.res-flag{width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid rgba(255,255,255,.2)}
+.res-name{flex:1;font-size:14px;font-weight:800;letter-spacing:.04em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-badge{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.07em;padding:1px 6px;border-radius:999px;margin-left:4px;flex-shrink:0}
+.res-badge.win{background:rgba(255,200,61,.2);color:var(--amber);border:1px solid rgba(255,200,61,.4)}
+.res-badge.me{background:rgba(255,255,255,.1);color:var(--chalk-dim);border:1px solid var(--bord)}
+.res-clicks{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--chalk);flex-shrink:0}
+.res-clicks span{font-size:9px;color:var(--chalk-dim)}
+/* Takım satırı alt oyuncu listesi */
+.res-team-players{width:100%;padding:4px 0 2px 42px;display:flex;flex-direction:column;gap:3px;margin-top:-2px;margin-bottom:4px}
+.res-team-player{font-family:var(--mono);font-size:11px;color:var(--chalk-dim);display:flex;gap:6px;align-items:center}
+.res-team-player img{width:18px;height:18px;border-radius:50%;object-fit:cover}
+/* Butonlar */
+.res-btns{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.res-btn-primary{
+  padding:15px;border-radius:12px;background:var(--amber);color:#173015;
+  font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  border:none;cursor:pointer;font-family:inherit;
+}
+.res-btn-secondary{
+  padding:13px;border-radius:12px;background:transparent;color:var(--chalk-dim);
+  font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--bord);cursor:pointer;font-family:inherit;
 }
 
 /* ---- Katılma ekranı ---- */
@@ -246,11 +290,20 @@ footer{
 </div>
 
 <div class="winner-overlay off" id="winnerOverlay">
-  <div class="winner-trophy">🏆</div>
-  <div class="winner-title" id="winnerTitle">GALİP!</div>
-  <div class="winner-name" id="winnerNameEl"></div>
-  <button class="winner-btn" onclick="location.href='/'">Ana Sayfaya Dön</button>
-  <button class="winner-btn" style="background:transparent;border:1px solid var(--bord);color:var(--chalk-dim)" onclick="location.href='/profile.html'">Profilimi Gör</button>
+  <div class="winner-inner">
+    <div class="res-header">
+      <span class="res-trophy" id="resTrophy">🏆</span>
+      <span class="res-title" id="resTitle">GALİP!</span>
+      <span class="res-subtitle" id="resSubtitle"></span>
+    </div>
+    <div class="res-info" id="resInfo"></div>
+    <div style="width:100%;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--chalk-dim);opacity:.7;margin-bottom:8px">Sonuçlar</div>
+    <div id="resRows" style="width:100%"></div>
+    <div class="res-btns">
+      <button class="res-btn-primary" onclick="location.href='/profile.html'">Profilime Git</button>
+      <button class="res-btn-secondary" onclick="location.href='/'">Ana Sayfaya Dön</button>
+    </div>
+  </div>
 </div>
 
 <header>
@@ -515,13 +568,9 @@ function render(){
     sbar.textContent = '⏱ ' + fmtMs(left) + ' kaldı';
   }
 
-  // Winner overlay
+  // Bitiş özet ekranı
   if(S.status==='finished' && lastStatus!=='finished'){
-    const me = S.players.find(p=>p.deviceId===deviceId);
-    const isWinner = S.mode==='individual' ? S.winner===deviceId : (me && me.teamId===S.winner);
-    $('winnerTitle').textContent = isWinner ? '🏆 GALİP!' : '🎯 TAMAMLANDI';
-    $('winnerNameEl').textContent = isWinner ? 'Tebrikler!' : `Kazanan: ${S.winnerName||'–'}`;
-    $('winnerOverlay').classList.remove('off');
+    showResultScreen();
   }
 
   lastStatus = S.status;
@@ -653,6 +702,76 @@ function statusText(){
 function modeLabel(r){ return r.mode==='team'?'Takımlı':'Bireysel'; }
 function winLabel(r){ return r.winType==='clicks'?`İlk ${fmt(r.winValue)} tık`:`${r.winValue}sn en iyi`; }
 function fmtMs(ms){ const s=Math.ceil(ms/1000); return s<60?s+'sn':`${Math.floor(s/60)}dk ${String(s%60).padStart(2,'0')}sn`; }
+
+function showResultScreen(){
+  const me = S.players.find(p=>p.deviceId===deviceId);
+  const isWinner = S.mode==='individual' ? S.winner===deviceId : (me && me.teamId===S.winner);
+
+  // Başlık
+  $('resTrophy').textContent = isWinner ? '🏆' : '🎯';
+  $('resTitle').textContent  = isWinner ? 'GALİP!' : 'TAMAMLANDI';
+  $('resSubtitle').textContent = isWinner ? 'Tebrikler, yarışı kazandın!' : `Kazanan: ${S.winnerName||'–'}`;
+
+  // Yarış bilgisi
+  const finDate = S.finishedAt ? new Date(S.finishedAt).toLocaleString('tr-TR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '–';
+  $('resInfo').innerHTML = `
+    <div class="res-info-item"><strong>${modeLabel(S)}</strong>Mod</div>
+    <div class="res-info-item"><strong>${winLabel(S)}</strong>Kazanma Koşulu</div>
+    <div class="res-info-item"><strong>${S.players.length} oyuncu</strong>Katılımcı</div>
+    <div class="res-info-item"><strong>${finDate}</strong>Tamamlandı</div>
+  `;
+
+  // Sonuç satırları
+  const rows = $('resRows');
+  rows.innerHTML = '';
+
+  if(S.mode==='team'){
+    const sorted = [...S.teams].sort((a,b)=>(b.clicks||0)-(a.clicks||0));
+    sorted.forEach((t,i)=>{
+      const isTeamWinner = t.id === S.winner;
+      const isMyTeam = me && me.teamId === t.id;
+      const flagSrc = window.getFlagSrc ? window.getFlagSrc(t.flag) : '';
+      const row = document.createElement('div');
+      row.className = 'res-row' + (isTeamWinner?' winner-row':'') + (isMyTeam?' me-row':'');
+      row.innerHTML = `
+        <span class="res-rank ${i===0?'gold':''}"">#${i+1}</span>
+        ${flagSrc?`<img class="res-flag" src="${flagSrc}" alt="">`:'<span style="width:30px"></span>'}
+        <span class="res-name">${t.name||'Takım'}${isTeamWinner?`<span class="res-badge win">GALİP</span>`:''}${isMyTeam&&!isTeamWinner?`<span class="res-badge me">SEN</span>`:''}</span>
+        <span class="res-clicks">${fmt(t.clicks||0)}<span> tık</span></span>
+      `;
+      rows.appendChild(row);
+      // Takım oyuncuları
+      const teamPlayers = S.players.filter(p=>p.teamId===t.id).sort((a,b)=>b.clicks-a.clicks);
+      if(teamPlayers.length){
+        const sub = document.createElement('div');
+        sub.className = 'res-team-players';
+        sub.innerHTML = teamPlayers.map(p=>{
+          const pFlag = window.getFlagSrc ? window.getFlagSrc(p.flag) : '';
+          return `<div class="res-team-player">${pFlag?`<img src="${pFlag}" alt="">`:''}${p.name}${p.deviceId===deviceId?' (sen)':''} — ${fmt(p.clicks)} tık</div>`;
+        }).join('');
+        rows.appendChild(sub);
+      }
+    });
+  } else {
+    const sorted = [...S.players].sort((a,b)=>b.clicks-a.clicks);
+    sorted.forEach((p,i)=>{
+      const isP = p.deviceId === S.winner;
+      const isMe = p.deviceId === deviceId;
+      const flagSrc = window.getFlagSrc ? window.getFlagSrc(p.flag) : '';
+      const row = document.createElement('div');
+      row.className = 'res-row' + (isP?' winner-row':'') + (isMe?' me-row':'');
+      row.innerHTML = `
+        <span class="res-rank ${i===0?'gold':''}"">#${i+1}</span>
+        ${flagSrc?`<img class="res-flag" src="${flagSrc}" alt="">`:'<span style="width:30px"></span>'}
+        <span class="res-name">${p.name}${isP?`<span class="res-badge win">GALİP</span>`:''}${isMe&&!isP?`<span class="res-badge me">SEN</span>`:''}</span>
+        <span class="res-clicks">${fmt(p.clicks)}<span> tık</span></span>
+      `;
+      rows.appendChild(row);
+    });
+  }
+
+  $('winnerOverlay').classList.remove('off');
+}
 
 // ---- Optimistic click count ----
 let _localAdded = 0;
