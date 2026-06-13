@@ -280,11 +280,11 @@ app.post('/api/race/create', {
   schema: { body: { type:'object', required:['device','name','mode','winType','winValue','maxPlayers'],
     properties: { device:{type:'string'}, name:{type:'string'}, mode:{type:'string'},
       winType:{type:'string'}, winValue:{type:'number'}, maxPlayers:{type:'number'},
-      teams:{type:'array'}, creatorFlag:{type:'object'} } } },
+      teams:{type:'array'}, creatorFlag:{type:'object'}, isPublic:{type:'boolean'} } } },
   attachValidation: true,
 }, async (req) => {
   if (req.validationError) return { ok: false, reason: 'invalid' };
-  const { device, name, mode, winType, winValue, maxPlayers, teams, creatorFlag } = req.body;
+  const { device, name, mode, winType, winValue, maxPlayers, teams, creatorFlag, isPublic } = req.body;
   if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
   const registeredName = await redis.get(`auth:device:${device}`);
   if (!registeredName) return { ok: false, reason: 'not_logged_in' };
@@ -314,7 +314,7 @@ app.post('/api/race/create', {
     }
   }
 
-  return racesLib.createRace({ creatorDevice: device, creatorName: registeredName, mode, winType, winValue: wv, maxPlayers: mp, teams, creatorFlag });
+  return racesLib.createRace({ creatorDevice: device, creatorName: registeredName, mode, winType, winValue: wv, maxPlayers: mp, teams, creatorFlag, isPublic: isPublic !== false });
 });
 
 // Yarışa katıl

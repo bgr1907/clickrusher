@@ -377,6 +377,18 @@ footer{
 .ori-left .ori-meta{font-family:var(--mono);font-size:10px;color:var(--chalk-dim)}
 .ori-players{font-family:var(--mono);font-size:12px;color:var(--amber);flex-shrink:0;margin-left:8px}
 .open-races-empty{font-family:var(--mono);font-size:12px;color:var(--chalk-dim);padding:8px 4px;opacity:.7}
+.wiz-vis-row{display:flex;gap:8px}
+.wiz-vis-btn{flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid var(--bord);background:rgba(255,255,255,.04);font-family:var(--mono);font-size:11px;font-weight:700;color:var(--chalk-dim);transition:all .15s;cursor:pointer;text-align:center;line-height:1.4}
+.wiz-vis-btn span{font-size:9px;font-weight:400;opacity:.75;display:block;margin-top:2px}
+.wiz-vis-btn.selected{border-color:var(--amber);color:var(--amber);background:rgba(255,200,61,.08)}
+/* ---- Desktop: drawer her zaman açık ---- */
+@media(min-width:900px){
+  #menuBtn{display:none}
+  #drawerOverlay{display:none!important}
+  #drawerClose{display:none}
+  #drawer{transform:translateX(0)!important;width:240px}
+  body{padding-left:240px}
+}
 
 /* ============ YARIŞMA SİHİRBAZI ============ */
 .wiz-modal{width:100%;max-width:480px;background:var(--panel-2);border:1px solid var(--bord);border-radius:18px;padding:0;overflow:hidden}
@@ -626,6 +638,11 @@ footer{
 
       <!-- Adım 4: Özet & Oluştur -->
       <div class="wiz-pane" id="wizPane4">
+        <div class="wiz-label">Görünürlük</div>
+        <div class="wiz-vis-row">
+          <button class="wiz-vis-btn selected" id="wizVisPublic">🌍 Herkese Açık<br><span>Sol menüde listelenir</span></button>
+          <button class="wiz-vis-btn" id="wizVisPrivate">🔒 Gizli<br><span>Sadece link ile katılım</span></button>
+        </div>
         <div class="wiz-label">Yarış Özeti</div>
         <div class="wiz-summary" id="wizSummary"></div>
         <button class="wiz-btn" id="wizCreateBtn">Yarışı Oluştur 🏁</button>
@@ -1390,6 +1407,7 @@ const WIZ = {
   creatorFlag:{ type:'country', value:'TUR' },
   teams:      [],
   teamCount:  2,
+  isPublic:   true,
 };
 const CTRY_CODES = Object.keys(Object.fromEntries(TEAMS.map(t=>[t.c,t])));
 
@@ -1569,15 +1587,20 @@ $('wizStep3TeamNext').onclick=()=>{ window._wizShowPane('wizPane4'); buildWizSum
 $('wizStep3TeamBack').onclick=()=>{ window._wizShowPane('wizPane2'); };
 
 // ---- Adım 4: Özet & Oluştur ----
+$('wizVisPublic').onclick =()=>{ WIZ.isPublic=true;  $('wizVisPublic').classList.add('selected');  $('wizVisPrivate').classList.remove('selected'); buildWizSummary(); };
+$('wizVisPrivate').onclick=()=>{ WIZ.isPublic=false; $('wizVisPrivate').classList.add('selected'); $('wizVisPublic').classList.remove('selected');  buildWizSummary(); };
+
 function buildWizSummary(){
   const modeLabel=WIZ.mode==='team'?'Takımlı':'Bireysel';
   const winLabel =WIZ.winType==='clicks'?`İlk ${WIZ.winValue} tık`:`${WIZ.winValue} saniyede en iyi`;
   const teamsStr =WIZ.mode==='team'?WIZ.teams.map(t=>t.name).join(', '):'–';
+  const visLabel =WIZ.isPublic?'🌍 Herkese Açık':'🔒 Gizli';
   $('wizSummary').innerHTML=`
     <div class="ws-row"><span class="ws-key">Mod</span><span class="ws-val">${modeLabel}</span></div>
     <div class="ws-row"><span class="ws-key">Kazanma</span><span class="ws-val">${winLabel}</span></div>
     <div class="ws-row"><span class="ws-key">Max Oyuncu</span><span class="ws-val">${WIZ.maxPlayers}</span></div>
     ${WIZ.mode==='team'?`<div class="ws-row"><span class="ws-key">Takımlar</span><span class="ws-val">${teamsStr}</span></div>`:''}
+    <div class="ws-row"><span class="ws-key">Görünürlük</span><span class="ws-val">${visLabel}</span></div>
   `;
 }
 $('wizStep4Back').onclick=()=>{ window._wizShowPane(WIZ.mode==='team'?'wizPane3Team':'wizPane3Ind'); };
@@ -1588,7 +1611,7 @@ $('wizCreateBtn').onclick = async ()=>{
     const body={
       device:deviceId, name:S.name,
       mode:WIZ.mode, winType:WIZ.winType, winValue:WIZ.winValue, maxPlayers:WIZ.maxPlayers,
-      creatorFlag:WIZ.creatorFlag,
+      creatorFlag:WIZ.creatorFlag, isPublic:WIZ.isPublic,
       ...(WIZ.mode==='team'?{teams:WIZ.teams}:{}),
     };
     const res=await fetch('/api/race/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
