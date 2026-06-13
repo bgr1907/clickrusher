@@ -60,6 +60,9 @@ main{max-width:800px;margin:0 auto;padding:16px 12px 80px}
 /* ---- Bekleme lobisi ---- */
 .lobby{background:var(--panel);border:1px solid var(--bord);border-radius:16px;padding:20px;margin-bottom:16px}
 .lobby h3{font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:12px}
+.force-start-btn{width:100%;margin-top:14px;padding:12px;border-radius:10px;background:var(--amber);color:#173015;font-size:14px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border:none;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.force-start-btn:disabled{opacity:.4;cursor:not-allowed}
+.force-start-note{font-family:var(--mono);font-size:11px;color:var(--chalk-dim);margin-top:6px;text-align:center;opacity:.8}
 .player-list{display:flex;flex-direction:column;gap:8px}
 .player-row{
   display:flex;align-items:center;gap:10px;
@@ -366,6 +369,10 @@ footer{
   <div class="lobby" id="lobbyPanel" style="display:none">
     <h3>Oyuncular (<span id="lobbyCount">0</span> / <span id="lobbyMax">0</span>)</h3>
     <div class="player-list" id="playerList"></div>
+    <div id="forceStartWrap" style="display:none">
+      <button class="force-start-btn" id="forceStartBtn">🚀 Yarışı Başlat</button>
+      <div class="force-start-note" id="forceStartNote"></div>
+    </div>
   </div>
 
   <!-- Büyük tık butonu -->
@@ -624,6 +631,17 @@ function renderLobby(){
     row.appendChild(flagWrap); row.appendChild(name);
     list.appendChild(row);
   });
+
+  // Kurucu erken başlatma butonu — sadece bireysel modda
+  const isCreator = joined && S.creator === deviceId && S.mode === 'individual';
+  $('forceStartWrap').style.display = isCreator ? '' : 'none';
+  if(isCreator){
+    const enough = S.players.length >= 2;
+    $('forceStartBtn').disabled = !enough;
+    $('forceStartNote').textContent = enough
+      ? `${S.players.length} oyuncuyla şimdi başlat (oda dolmadan)`
+      : 'En az 2 oyuncu gerekli';
+  }
 }
 
 function renderTeams(){
@@ -796,6 +814,23 @@ $('joinSubmit').onclick = async ()=>{
     else { alert(data.reason==='not_logged_in'?'Giriş yapman gerekiyor!':data.reason==='flag_badword'?'Bayrak metninde uygunsuz ifade var, lütfen değiştir':data.reason||'Hata'); }
   } catch{ alert('Bağlantı hatası'); }
   $('joinSubmit').disabled=false; $('joinSubmit').textContent='Katıl';
+};
+
+$('forceStartBtn').onclick = async ()=>{
+  $('forceStartBtn').disabled=true; $('forceStartBtn').textContent='Başlatılıyor...';
+  try {
+    const res = await fetch(`/api/race/${raceId}/force-start`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({device:deviceId}),
+    });
+    const data = await res.json();
+    if(!data.ok){
+      alert(data.reason==='not_enough_players'?'En az 2 oyuncu gerekli':data.reason||'Hata');
+      $('forceStartBtn').disabled=false; $('forceStartBtn').textContent='🚀 Yarışı Başlat';
+    }
+  } catch {
+    $('forceStartBtn').disabled=false; $('forceStartBtn').textContent='🚀 Yarışı Başlat';
+  }
 };
 
 $('bigClick').onclick = ()=>{

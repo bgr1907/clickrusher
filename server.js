@@ -348,6 +348,25 @@ app.post('/api/race/:id/join', {
   return { ok: true };
 });
 
+// Kurucu erken başlatma (sadece bireysel mod)
+app.post('/api/race/:id/force-start', {
+  schema: { body: { type:'object', required:['device'],
+    properties: { device:{type:'string'} } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false, reason: 'invalid' };
+  const { device } = req.body;
+  const { id } = req.params;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
+  const registeredName = await redis.get(`auth:device:${device}`);
+  if (!registeredName) return { ok: false, reason: 'not_logged_in' };
+  const result = await racesLib.forceStart(id, device);
+  if (!result.ok) return result;
+  scheduleRaceTransitions(id, result.winType, result.winValue);
+  await broadcastRace(id);
+  return { ok: true };
+});
+
 // Yarışa tık gönder
 app.post('/api/race/:id/click', {
   schema: { body: { type:'object', required:['device','n'],
