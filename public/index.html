@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Taraftar Arena 26</title>
+<title>CLICKRUSHER — Tournament 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;800&family=Chivo+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Saira+Condensed:wght@600;800&family=Chivo+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --grass1:#2E7D33;
@@ -47,9 +47,15 @@ header{
   border-bottom:2px solid var(--bord);
   padding:10px 14px 0;
 }
-.brand{display:flex;align-items:baseline;gap:8px;justify-content:center;position:relative}
-.tz-pick{
+.brand{display:flex;align-items:center;gap:8px;justify-content:center;position:relative;padding:4px 0}
+.brand-link{text-decoration:none;color:inherit;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1}
+.site-title{font-family:'Lilita One',cursive;font-size:clamp(22px,5.5vw,32px);letter-spacing:.06em;color:var(--chalk);display:block}
+.site-sub{font-family:'Lilita One',cursive;font-size:clamp(9px,2vw,12px);letter-spacing:.1em;color:var(--amber);opacity:.9;display:block}
+.tz-wrap{
   position:absolute;right:0;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.tz-pick{
   display:flex;align-items:center;gap:2px;
   background:rgba(255,255,255,.07);border:1px solid var(--bord);border-radius:8px;padding:3px;
 }
@@ -58,6 +64,36 @@ header{
   color:var(--chalk-dim);transition:all .15s;letter-spacing:.05em;
 }
 .tz-pick button.on{background:var(--amber);color:#000}
+.tz-gmt{font-family:var(--mono);font-size:9px;color:var(--chalk-dim);letter-spacing:.05em;opacity:.75}
+
+/* Sonraki Maçlar etiketi */
+.chips-wrap{margin-bottom:14px}
+.chips-label{display:block;font-family:var(--mono);font-size:10px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:7px;opacity:.7}
+.fixchips{margin-bottom:0}
+
+/* Maç kilidi */
+.match-lock{
+  font-family:var(--mono);font-size:11px;color:var(--chalk-dim);text-align:center;
+  padding:3px 8px;background:rgba(0,0,0,.35);border-radius:6px;letter-spacing:.03em;
+}
+@keyframes lockflash{50%{opacity:.15}}
+.match-lock.flash{animation:lockflash .25s ease 2}
+.battle.locked .flagbtn{opacity:.45;cursor:not-allowed}
+.battle.locked .tapBtn{opacity:.45;cursor:not-allowed;pointer-events:none}
+
+/* Kalp atışı animasyonu */
+@keyframes hb{
+  0%,100%{transform:scale(1)}
+  14%{transform:scale(1.28)}
+  28%{transform:scale(1.05)}
+  42%{transform:scale(1.22)}
+  65%{transform:scale(1)}
+}
+.cnt.hb1{animation:hb 1.4s ease-in-out infinite}
+.cnt.hb2{animation:hb 1.0s ease-in-out infinite}
+.cnt.hb3{animation:hb 0.65s ease-in-out infinite}
+.cnt.hb4{animation:hb 0.42s ease-in-out infinite}
 .brand h1{font-size:clamp(22px,5.5vw,30px);font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .brand h1 .y{color:var(--amber)}
 .brand .live{
@@ -301,12 +337,18 @@ footer{
 
 <header>
   <div class="brand">
-    <h1>Taraftar <span class="y">Arena</span> 26</h1>
+    <a href="/" class="brand-link">
+      <span class="site-title">CLICKRUSHER</span>
+      <span class="site-sub">TOURNAMENT 2026</span>
+    </a>
     <span class="live"><span class="dot"></span>CANLI</span>
-    <div class="tz-pick" id="tzPick">
-      <button data-tz="Europe/Istanbul">TR</button>
-      <button data-tz="America/New_York">ET</button>
-      <button data-tz="America/Los_Angeles">PT</button>
+    <div class="tz-wrap">
+      <div class="tz-pick" id="tzPick">
+        <button data-tz="Europe/Istanbul">TR</button>
+        <button data-tz="America/New_York">ET</button>
+        <button data-tz="America/Los_Angeles">PT</button>
+      </div>
+      <div class="tz-gmt" id="tzGmt"></div>
     </div>
   </div>
   <nav class="tabs">
@@ -361,7 +403,10 @@ footer{
   </section>
 
   <section class="view" id="viewBattle">
-    <div class="fixchips" id="fixchips"></div>
+    <div class="chips-wrap">
+      <span class="chips-label">Sonraki Maçlar</span>
+      <div class="fixchips" id="fixchips"></div>
+    </div>
 
     <div class="battle">
       <div class="duel">
@@ -377,6 +422,7 @@ footer{
           <span class="spark" id="spark">⚔️</span>
           VS
           <div id="liveScore" class="live-score" hidden></div>
+          <div id="matchLock" class="match-lock" hidden></div>
         </div>
         <div class="side">
           <button class="flagbtn" id="btnB">
@@ -418,7 +464,7 @@ footer{
   </section>
 </main>
 
-<footer>Taraftar Arena 26 · bayraklar stilize çizimdir · resmi turnuva markalarıyla bağı yoktur</footer>
+<footer>CLICKRUSHER · bayraklar stilize çizimdir · resmi turnuva markalarıyla bağı yoktur</footer>
 
 <script>
 /* =========================================================
@@ -868,9 +914,15 @@ function buildChips(){
 }
 function battleClick(side){
   if(!S.fix) return;
+  if(!matchStarted(S.fix)){
+    const lockEl=$('matchLock');
+    if(lockEl){ lockEl.classList.remove('flash'); void lockEl.offsetWidth; lockEl.classList.add('flash'); }
+    return;
+  }
   if(!queueClick('match', S.fix.id, side)) return;
   const B=S.battles[S.fix.id];if(!B)return;
   B[side]++;
+  trackClickRate(side);
   pop(side==='A'?$('btnA'):$('btnB'));
   const sp=$('spark');
   sp.classList.remove('hitL','hitR');void sp.offsetWidth;
@@ -892,12 +944,25 @@ function paintBattle(full){
   }
   const ls=S.liveScores[f.id];
   const lsEl=$('liveScore');
-  if(ls){
+  const lockEl=$('matchLock');
+  const battleEl=document.querySelector('.battle');
+  const msLeft=f.utc ? new Date(f.utc).getTime()-Date.now() : -1;
+  const locked=msLeft>0;
+  if(battleEl) battleEl.classList.toggle('locked',locked);
+  if(locked){
+    lsEl.hidden=true;
+    lockEl.hidden=false;
+    lockEl.textContent=`⏰ ${formatCountdown(msLeft)} kaldı`;
+  } else if(ls){
+    lockEl.hidden=true;
     lsEl.className='live-score'+(ls.finished?' done':'');
     lsEl.innerHTML=`${ls.homeScore} – ${ls.awayScore}`+
       (ls.finished?'<small>Bitti</small>':(ls.elapsed?`<small>${ls.elapsed}</small>`:''));
     lsEl.hidden=false;
-  } else { lsEl.hidden=true; }
+  } else {
+    lsEl.hidden=true;
+    lockEl.hidden=true;
+  }
 
   $('cntA').textContent=fmt(B.A);$('cntB').textContent=fmt(B.B);
   const tot=B.A+B.B||1;
@@ -962,6 +1027,15 @@ function formatKO(f) {
   } catch { return f.ko || ''; }
 }
 
+const TZ_GMT = {
+  'Europe/Istanbul':     'GMT+3',
+  'America/New_York':    'GMT-4',
+  'America/Los_Angeles': 'GMT-7',
+};
+function updateTzGmt() {
+  const el = $('tzGmt');
+  if (el) el.textContent = TZ_GMT[activeTZ] || '';
+}
 (function initTZPick() {
   document.querySelectorAll('#tzPick button').forEach(btn => {
     btn.classList.toggle('on', btn.dataset.tz === activeTZ);
@@ -970,10 +1044,48 @@ function formatKO(f) {
       localStorage.setItem('tz', activeTZ);
       document.querySelectorAll('#tzPick button').forEach(b =>
         b.classList.toggle('on', b.dataset.tz === activeTZ));
+      updateTzGmt();
       buildChips();
     };
   });
+  updateTzGmt();
 })();
+
+// ---- Kalp atışı (click rate tracker) ----
+const _hbBuckets = { A: [], B: [] };
+function trackClickRate(side) {
+  const now = Date.now();
+  _hbBuckets[side] = _hbBuckets[side].filter(t => now - t < 3000);
+  _hbBuckets[side].push(now);
+  _applyHeartbeat();
+}
+function _applyHeartbeat() {
+  ['A','B'].forEach(side => {
+    const cps = Math.round(_hbBuckets[side].length / 3);
+    const el  = $(side === 'A' ? 'cntA' : 'cntB');
+    if (!el) return;
+    el.className = 'cnt' + (cps >= 13 ? ' hb4' : cps >= 8 ? ' hb3' : cps >= 4 ? ' hb2' : cps >= 1 ? ' hb1' : '');
+  });
+}
+setInterval(() => {
+  const now = Date.now();
+  ['A','B'].forEach(s => { _hbBuckets[s] = _hbBuckets[s].filter(t => now - t < 3000); });
+  _applyHeartbeat();
+}, 1000);
+
+// ---- Maç kilidi (pre-match lock) ----
+function matchStarted(f) {
+  if (!f || !f.utc) return true;
+  return Date.now() >= new Date(f.utc).getTime();
+}
+function formatCountdown(ms) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}sa ${String(m % 60).padStart(2,'0')}dk`;
+  if (m > 0) return `${m}dk ${String(s % 60).padStart(2,'0')}sn`;
+  return `${s}sn`;
+}
 
 // ---- Auth modal mantığı ----
 let authMode = 'register'; // 'register' | 'login'
