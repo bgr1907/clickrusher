@@ -71,7 +71,7 @@ async function buildState(deviceId, username) {
   }));
 
   const fixtureStates = fixtures.map((f, i) => ({
-    id: f.id, a: f.a, b: f.b, ko: f.ko,
+    id: f.id, a: f.a, b: f.b, ko: f.ko, utc: f.utc,
     counters: fixData[i * 3],
     topA: fixData[i * 3 + 1],
     topB: fixData[i * 3 + 2],
