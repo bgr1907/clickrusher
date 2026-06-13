@@ -1585,7 +1585,7 @@ $('wizCreateBtn').onclick = async ()=>{
     const res=await fetch('/api/race/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const data=await res.json();
     if(data.ok){ closeWizard(); window.location.href='/race.html?id='+data.id; }
-    else { alert(data.reason==='not_logged_in'?'Giriş yapman gerekiyor':data.reason||'Hata'); }
+    else { alert(data.reason==='not_logged_in'?'Giriş yapman gerekiyor':data.reason==='flag_badword'?'Bayrak metninde uygunsuz ifade var, lütfen değiştir':data.reason||'Hata'); }
   } catch { alert('Bağlantı hatası'); }
   $('wizCreateBtn').disabled=false; $('wizCreateBtn').textContent='Yarışı Oluştur 🏁';
 };

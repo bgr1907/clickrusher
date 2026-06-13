@@ -292,6 +292,28 @@ app.post('/api/race/create', {
   if (!['clicks','time'].includes(winType))     return { ok: false, reason: 'invalid' };
   const wv = Math.min(Math.max(Math.floor(winValue), winType === 'clicks' ? 50 : 15), winType === 'clicks' ? 10000 : 300);
   const mp = Math.min(Math.max(Math.floor(maxPlayers), 2), 16);
+
+  // Özel bayrak metni küfür filtresi
+  if (creatorFlag && creatorFlag.type === 'custom' && creatorFlag.value) {
+    const txt = String(creatorFlag.value.text || '').replace(/[<>"'&]/g, '').slice(0, 3);
+    if (containsBadWord(txt)) return { ok: false, reason: 'flag_badword' };
+    creatorFlag.value.text = txt;
+  }
+
+  // Takım adları ve takım bayrakları küfür filtresi
+  if (mode === 'team' && Array.isArray(teams)) {
+    for (const t of teams) {
+      const tName = String(t.name || '').replace(/[<>"'&]/g, '').slice(0, 30);
+      if (containsBadWord(tName)) return { ok: false, reason: 'flag_badword' };
+      t.name = tName;
+      if (t.flag && t.flag.type === 'custom' && t.flag.value) {
+        const txt = String(t.flag.value.text || '').replace(/[<>"'&]/g, '').slice(0, 3);
+        if (containsBadWord(txt)) return { ok: false, reason: 'flag_badword' };
+        t.flag.value.text = txt;
+      }
+    }
+  }
+
   return racesLib.createRace({ creatorDevice: device, creatorName: registeredName, mode, winType, winValue: wv, maxPlayers: mp, teams, creatorFlag });
 });
 
@@ -307,6 +329,14 @@ app.post('/api/race/:id/join', {
   if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
   const registeredName = await redis.get(`auth:device:${device}`);
   if (!registeredName) return { ok: false, reason: 'not_logged_in' };
+
+  // Katılımcı özel bayrak metni küfür filtresi
+  if (flag && flag.type === 'custom' && flag.value) {
+    const txt = String(flag.value.text || '').replace(/[<>"'&]/g, '').slice(0, 3);
+    if (containsBadWord(txt)) return { ok: false, reason: 'flag_badword' };
+    flag.value.text = txt;
+  }
+
   const result = await racesLib.joinRace(id, device, registeredName, flag, teamId);
   if (!result.ok) return result;
   if (result.shouldStartCountdown) {

@@ -674,7 +674,7 @@ $('joinSubmit').onclick = async ()=>{
     });
     const data = await res.json();
     if(data.ok){ joined=true; $('joinScreen').style.display='none'; }
-    else { alert(data.reason==='not_logged_in'?'Giriş yapman gerekiyor!':data.reason||'Hata'); }
+    else { alert(data.reason==='not_logged_in'?'Giriş yapman gerekiyor!':data.reason==='flag_badword'?'Bayrak metninde uygunsuz ifade var, lütfen değiştir':data.reason||'Hata'); }
   } catch{ alert('Bağlantı hatası'); }
   $('joinSubmit').disabled=false; $('joinSubmit').textContent='Katıl';
 };
