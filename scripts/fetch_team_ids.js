@@ -33,7 +33,8 @@ async function main() {
     console.error('/get/teams başarısız:', teamsRes.status);
     process.exit(1);
   }
-  const teams = await teamsRes.json();
+  const raw   = await teamsRes.json();
+  const teams = raw.teams ?? raw; // API {"teams":[...]} veya direkt dizi dönebilir
 
   const map = {};
   for (const t of teams) {
