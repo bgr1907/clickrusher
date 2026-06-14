@@ -1106,6 +1106,7 @@ function applyState(data){
         topB: f.topB ?? [],
       };
     });
+    // İlk seçimi buildChips yapar (timezone-aware); sadece acil fallback
     if(!S.fix && S.fixtures.length) S.fix = S.fixtures[0];
   }
   if(data.countryTops) Object.assign(S.cTops, data.countryTops);
@@ -1419,7 +1420,35 @@ $('backBtn').onclick=()=>{S.country=null;showView('Grid');sortGrid()};
 /* ============== GÜNÜN KAPIŞMASI ============== */
 function buildChips(){
   const ch=$('fixchips');ch.innerHTML='';
-  S.fixtures.forEach(f=>{
+
+  // Seçili timezone'da bugünün tarihi
+  const todayStr = new Date().toLocaleDateString('tr-TR',{timeZone:activeTZ});
+
+  // Bugünün maçlarını filtrele
+  const todayFix = S.fixtures.filter(f => {
+    if(!f.utc) return false;
+    return new Date(f.utc).toLocaleDateString('tr-TR',{timeZone:activeTZ}) === todayStr;
+  });
+
+  // Bugün maç yoksa tümünü göster (fallback)
+  const pool = todayFix.length ? todayFix : S.fixtures;
+
+  // S.fix bugünkü pool'da değilse en uygun maçı seç
+  if(!pool.find(f => S.fix && f.id===S.fix.id) && pool.length){
+    const now = Date.now();
+    // Sıralama: önce yaklaşan maçlar (erken olan önce), sonra geçmiş (geç olan önce)
+    const sorted = [...pool].filter(f=>f.utc).sort((a,b)=>{
+      const da=new Date(a.utc)-now, db=new Date(b.utc)-now;
+      if(da>=0 && db>=0) return da-db;   // ikisi de gelecek: erkene öncelik
+      if(da<0  && db<0)  return db-da;   // ikisi de geçmiş: yakın geçmişe öncelik
+      return da>=0 ? -1 : 1;             // gelecek > geçmiş
+    });
+    S.fix = sorted[0] || pool[0];
+  } else if(!S.fix && pool.length){
+    S.fix = pool[0];
+  }
+
+  pool.forEach(f=>{
     const b=document.createElement('button');
     const ta=T[f.a],tb=T[f.b];
     if(!ta||!tb) return;
@@ -1428,8 +1457,8 @@ function buildChips(){
     if(S.fix && S.fix.id===f.id) b.classList.add('on');
     ch.appendChild(b);
   });
-  // Maç yoksa bilgi göster
-  if(!S.fixtures.length) ch.innerHTML='<span style="color:var(--chalk-dim);font-size:13px;padding:6px">Bugün maç yok</span>';
+
+  if(!pool.length) ch.innerHTML='<span style="color:var(--chalk-dim);font-size:13px;padding:6px">Bugün maç yok</span>';
 }
 function battleClick(side){
   if(!S.fix) return;
@@ -1583,6 +1612,7 @@ updateClock();
       updateTzGmt();
       updateClock();
       buildChips();
+      if(S.fix && $('viewBattle').classList.contains('on')) paintBattle(true);
     };
   });
   updateTzGmt();
