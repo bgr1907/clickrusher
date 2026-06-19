@@ -1688,8 +1688,13 @@ async function enter() {
       const data = await res.json();
       if (data.ok) { saveAndEnter(data.name, pwd); return; }
       if (data.reason === 'taken') {
+        // Nick alınmış — aynı şifreyle otomatik login dene
+        const loginRes  = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({device:deviceId, name:nick, password:pwd}) });
+        const loginData = await loginRes.json();
+        if (loginData.ok) { saveAndEnter(loginData.name, pwd); return; }
         authMode = 'login';
-        showAuthMsg('Bu nick alınmış — şifreni gir', false);
+        showAuthMsg(loginData.reason === 'wrong_password' ? 'Şifre yanlış, tekrar dene' : 'Bu nick alınmış — şifreni kontrol et');
         $('goBtn').textContent = 'Giriş Yap';
         $('goBtn').disabled = false;
         $('pwdIn').select();
