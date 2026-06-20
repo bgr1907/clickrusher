@@ -16,6 +16,7 @@ const { registerUser, loginUser } = require('./lib/auth');
 const { containsBadWord }         = require('./lib/badwords');
 const scoresLib          = require('./lib/scores');
 const racesLib           = require('./lib/races');
+const crunLib            = require('./lib/crun');
 const redis              = require('./lib/redis');
 
 const app = Fastify({ logger: { level: 'warn' } });
@@ -473,6 +474,169 @@ app.post('/api/chat/:fixtureId', {
 
   broadcastChatMsg(fixtureId, msg);
   return { ok: true, msg };
+});
+
+// ============================================================
+// CHAMELEON RUN
+// ============================================================
+const crunClients = new Map(); // roomId → Set<res>
+
+async function broadcastCrun(roomId, extra) {
+  const set = crunClients.get(roomId);
+  if (!set || !set.size) return;
+  const state = await crunLib.getRoomState(roomId);
+  if (!state) return;
+  const payload = extra ? { ...state, ...extra } : state;
+  const data    = `data: ${JSON.stringify(payload)}\n\n`;
+  for (const client of set) {
+    try { client.write(data); } catch { set.delete(client); }
+  }
+}
+
+function scheduleCrunTransitions(roomId, duration) {
+  setTimeout(async () => {
+    await crunLib.activateRoom(roomId);
+    await broadcastCrun(roomId);
+    setTimeout(async () => {
+      const room = await redis.hgetall(`crun:${roomId}`);
+      if (room && room.status === 'active') {
+        await crunLib.finishRoom(roomId);
+        await broadcastCrun(roomId);
+      }
+    }, duration * 1000);
+  }, 6000);
+}
+
+app.get('/api/crun/open', async () => crunLib.getOpenRooms());
+
+app.get('/api/crun/:id/state', async (req) => {
+  const state = await crunLib.getRoomState(req.params.id);
+  return state ?? { error: 'not_found' };
+});
+
+app.get('/api/crun/:id/stream', async (req, reply) => {
+  const { id } = req.params;
+  reply.raw.writeHead(200, {
+    'Content-Type':      'text/event-stream',
+    'Cache-Control':     'no-cache',
+    'Connection':        'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  reply.raw.write('retry: 3000\n\n');
+  if (!crunClients.has(id)) crunClients.set(id, new Set());
+  crunClients.get(id).add(reply.raw);
+  const state = await crunLib.getRoomState(id);
+  if (state) reply.raw.write(`data: ${JSON.stringify(state)}\n\n`);
+  req.raw.on('close', () => {
+    const s = crunClients.get(id);
+    if (s) { s.delete(reply.raw); if (!s.size) crunClients.delete(id); }
+  });
+  return reply;
+});
+
+app.post('/api/crun/create', {
+  schema: { body: { type: 'object', required: ['device', 'duration'],
+    properties: { device: { type: 'string' }, duration: { type: 'number' }, isPublic: { type: 'boolean' } } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false, reason: 'invalid' };
+  const { device, duration, isPublic } = req.body;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
+  const registeredName = await redis.get(`auth:device:${device}`);
+  if (!registeredName) return { ok: false, reason: 'not_logged_in' };
+  return crunLib.createRoom({ creatorDevice: device, creatorName: registeredName, duration, isPublic: isPublic !== false });
+});
+
+app.post('/api/crun/:id/join', {
+  schema: { body: { type: 'object', required: ['device'],
+    properties: { device: { type: 'string' }, flag: { type: 'object' } } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false, reason: 'invalid' };
+  const { device, flag } = req.body;
+  const { id } = req.params;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
+  const registeredName = await redis.get(`auth:device:${device}`);
+  if (!registeredName) return { ok: false, reason: 'not_logged_in' };
+  const result = await crunLib.joinRoom(id, device, registeredName, flag ?? null);
+  if (!result.ok) return result;
+  if (result.shouldStart) {
+    const room = await redis.hgetall(`crun:${id}`);
+    await crunLib.beginCountdown(id);
+    scheduleCrunTransitions(id, Number(room.duration));
+  }
+  await broadcastCrun(id);
+  return { ok: true };
+});
+
+app.post('/api/crun/:id/set-flag', {
+  schema: { body: { type: 'object', required: ['device', 'flag'],
+    properties: { device: { type: 'string' }, flag: { type: 'object' } } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false, reason: 'invalid' };
+  const { device, flag } = req.body;
+  const { id } = req.params;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
+  const registeredName = await redis.get(`auth:device:${device}`);
+  if (!registeredName) return { ok: false, reason: 'not_logged_in' };
+  await crunLib.setFlag(id, device, flag);
+  await broadcastCrun(id);
+  return { ok: true };
+});
+
+app.post('/api/crun/:id/force-start', {
+  schema: { body: { type: 'object', required: ['device'],
+    properties: { device: { type: 'string' } } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false, reason: 'invalid' };
+  const { device } = req.body;
+  const { id } = req.params;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
+  const registeredName = await redis.get(`auth:device:${device}`);
+  if (!registeredName) return { ok: false, reason: 'not_logged_in' };
+  const result = await crunLib.forceStart(id, device);
+  if (!result.ok) return result;
+  scheduleCrunTransitions(id, result.duration);
+  await broadcastCrun(id);
+  return { ok: true };
+});
+
+app.post('/api/crun/:id/powerup', {
+  schema: { body: { type: 'object', required: ['device', 'type'],
+    properties: { device: { type: 'string' }, type: { type: 'string' }, target: { type: 'string' } } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false };
+  const { device, type, target } = req.body;
+  const { id } = req.params;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false };
+  const result = await crunLib.usePowerup(id, device, type, target ?? null);
+  if (!result.ok) return result;
+  // Broadcast powerup event immediately to all room clients
+  const set = crunClients.get(id);
+  if (set) {
+    const data = `data: ${JSON.stringify({ _event: 'powerup', event: result.event })}\n\n`;
+    for (const client of set) {
+      try { client.write(data); } catch { set.delete(client); }
+    }
+  }
+  return { ok: true };
+});
+
+app.post('/api/crun/:id/distance', {
+  schema: { body: { type: 'object', required: ['device', 'distance'],
+    properties: { device: { type: 'string' }, distance: { type: 'number' } } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false };
+  const { device, distance } = req.body;
+  const { id } = req.params;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false };
+  await crunLib.reportDistance(id, device, distance);
+  await broadcastCrun(id);
+  return { ok: true };
 });
 
 const PORT = Number(process.env.PORT ?? 3000);

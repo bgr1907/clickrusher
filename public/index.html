@@ -456,6 +456,15 @@ footer{
 .ori-left .ori-meta{font-family:var(--mono);font-size:10px;color:var(--chalk-dim)}
 .ori-players{font-family:var(--mono);font-size:12px;color:var(--amber);flex-shrink:0;margin-left:8px}
 .open-races-empty{font-family:var(--mono);font-size:12px;color:var(--chalk-dim);padding:8px 4px;opacity:.7}
+.crun-room-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(77,255,136,.04);border:1px solid rgba(77,255,136,.15);
+  border-radius:8px;padding:8px 10px;cursor:pointer;transition:background .12s;
+}
+.crun-room-item:hover{background:rgba(77,255,136,.09)}
+.crun-room-item .cri-creator{font-size:12px;font-weight:700;color:#F2F7F0}
+.crun-room-item .cri-meta{font-family:var(--mono);font-size:10px;color:#BFD6C4}
+.crun-room-item .cri-players{font-family:var(--mono);font-size:12px;color:#4DFF88;flex-shrink:0;margin-left:8px}
 .wiz-vis-row{display:flex;gap:8px}
 .wiz-vis-btn{flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid var(--bord);background:rgba(255,255,255,.04);font-family:var(--mono);font-size:11px;font-weight:700;color:var(--chalk-dim);transition:all .15s;cursor:pointer;text-align:center;line-height:1.4}
 .wiz-vis-btn span{font-size:9px;font-weight:400;opacity:.75;display:block;margin-top:2px}
@@ -734,13 +743,20 @@ footer{
       <span class="di-icon">🏁</span>
       <div class="di-label"><strong>Click Yarışı Oluştur</strong><small>Kendi yarışını başlat</small></div>
     </button>
+    <button class="drawer-item" id="menuCreateCrun">
+      <span class="di-icon">🦎</span>
+      <div class="di-label"><strong>Chameleon Run Oluştur</strong><small>Bayraklı koşu yarışı</small></div>
+    </button>
     <button class="drawer-item" onclick="window.location.href='/profile.html'">
       <span class="di-icon">👤</span>
       <div class="di-label"><strong>Profilim</strong><small>İstatistikler ve yarış geçmişi</small></div>
     </button>
     <div class="drawer-sep"></div>
-    <div class="drawer-sec-label">Açık Yarışlar</div>
+    <div class="drawer-sec-label">Açık Click Yarışları</div>
     <div id="openRacesList"><div class="open-races-empty">Yükleniyor...</div></div>
+    <div class="drawer-sep"></div>
+    <div class="drawer-sec-label">🦎 Chameleon Run Odaları</div>
+    <div id="crunRoomsList"><div class="open-races-empty">Yükleniyor...</div></div>
   </div>
 </nav>
 
@@ -1762,6 +1778,7 @@ function openDrawer(){
     $('drawerOverlay').classList.add('on');
   }
   loadOpenRaces();
+  loadCrunRooms();
 }
 function closeDrawer(){
   if(isDesktop()){
@@ -1800,6 +1817,51 @@ async function loadOpenRaces(){
     });
   } catch { el.innerHTML='<div class="open-races-empty">Yüklenemedi</div>'; }
 }
+
+/* ============================================================
+   CHAMELEON RUN
+   ============================================================ */
+async function loadCrunRooms(){
+  const el=$('crunRoomsList');
+  el.innerHTML='<div class="open-races-empty">Yükleniyor...</div>';
+  try{
+    const res=await fetch('/api/crun/open');
+    const list=await res.json();
+    if(!list.length){el.innerHTML='<div class="open-races-empty">Şu an açık oda yok</div>';return;}
+    el.innerHTML='';
+    list.forEach(r=>{
+      const d=document.createElement('div');
+      d.className='crun-room-item';
+      d.innerHTML=`<div><div class="cri-creator">${r.creatorName}</div>
+        <div class="cri-meta">🦎 Koşu · ${r.duration}sn</div></div>
+        <div class="cri-players">${r.playerCount}/4</div>`;
+      d.onclick=()=>{ if(!isDesktop()) closeDrawer(); window.location.href='/chameleon-run.html?id='+r.id; };
+      el.appendChild(d);
+    });
+  }catch{el.innerHTML='<div class="open-races-empty">Yüklenemedi</div>';}
+}
+
+async function createCrunRoom(){
+  if(!S.name){ $('veil').classList.remove('off'); return; }
+  const dur = parseInt(prompt('Yarış süresi (saniye, 30-300):', '60'),10) || 60;
+  const safeD = Math.min(Math.max(dur, 30), 300);
+  try{
+    const res=await fetch('/api/crun/create',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({device:deviceId, duration:safeD})});
+    const data=await res.json();
+    if(data.ok){ closeDrawer(); window.location.href='/chameleon-run.html?id='+data.id; }
+    else if(data.reason==='not_logged_in'){ $('veil').classList.remove('off'); }
+    else alert('Oda oluşturulamadı: '+(data.reason||'?'));
+  }catch(e){ alert('Bağlantı hatası'); }
+}
+
+$('menuCreateCrun').onclick=()=>{ if(!isDesktop()) closeDrawer(); createCrunRoom(); };
+
+// Handle pending crun join after login
+(function checkPendingCrun(){
+  const pending=localStorage.getItem('crun_pending');
+  if(pending){ localStorage.removeItem('crun_pending'); window.location.href='/chameleon-run.html?id='+pending; }
+})();
 
 /* ============================================================
    YARIŞMA SİHİRBAZI
