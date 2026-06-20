@@ -622,7 +622,8 @@ app.post('/api/crun/:id/force-start', {
 
 app.post('/api/crun/:id/powerup', {
   schema: { body: { type: 'object', required: ['device', 'type'],
-    properties: { device: { type: 'string' }, type: { type: 'string' }, target: { type: 'string' } } } },
+    properties: { device: { type: 'string' }, type: { type: 'string' },
+      target: { type: 'string', nullable: true } } } },
   attachValidation: true,
 }, async (req) => {
   if (req.validationError) return { ok: false };

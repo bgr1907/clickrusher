@@ -703,6 +703,20 @@ function selectPu(type){
   renderPuBar();
 }
 
+// Lokal uygulanan eventleri SSE'de tekrar uygulamayı önler
+const localApplied = new Set(); // 'from:type'
+
+function applyEventIfNew(ev){
+  const key = `${ev.from}:${ev.type}`;
+  if (localApplied.has(key)){
+    // Bu eventi lokal zaten uyguladık; SSE confirmasyonunu yok say
+    processedEvents.add(ev.id);
+    localApplied.delete(key);
+    return;
+  }
+  applyEvent(ev);
+}
+
 async function usePowerupType(type){
   if (!myInventory.has(type)) return;
   if (serverState?.status !== 'active') return;
@@ -722,16 +736,23 @@ async function usePowerupType(type){
   }
 
   myInventory.delete(type);
-  // Bir sonraki mevcut gücü seç
   const next = PU_ORDER.find(t => myInventory.has(t));
   if (next) selectedPu = next;
   renderPuBar();
-  flashEffect(PU_META[type]?.color || '#FFD700');
 
+  // Efekti lokal hemen uygula (SSE round-trip bekleme)
+  const localEv = { id: `__local__${type}__${now}`, type, from: deviceId, target, ts: now };
+  localApplied.add(`${deviceId}:${type}`);
+  applyEvent(localEv);
+  showFlash(PU_META[type]?.color || '#FFD700');
+
+  // Sunucuya gönder — null target GÖNDERMEYİZ (Fastify schema string bekliyor)
+  const body = { device: deviceId, type };
+  if (target) body.target = target;
   try {
     await fetch(`/api/crun/${roomId}/powerup`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ device: deviceId, type, target }),
+      body: JSON.stringify(body),
     });
   } catch{}
 }
@@ -1097,7 +1118,7 @@ function handleSSE(raw){
   try { data = JSON.parse(raw); } catch{ return; }
 
   if (data._event === 'powerup' && data.event){
-    applyEvent(data.event);
+    applyEventIfNew(data.event); // lokal uygulananları tekrar uygulama
     return;
   }
 
