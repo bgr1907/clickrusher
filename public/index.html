@@ -1687,6 +1687,8 @@ function saveAndEnter(name, pwd) {
   updateChatAuth();
   checkPendingRace();
   loadState().then(() => connectSSE());
+  loadOpenRaces();
+  loadCrunRooms();
 }
 
 async function enter() {
@@ -1745,6 +1747,8 @@ if (storedName && storedPwd) {
         S.name = data.name;
         $('veil').classList.add('off');
         loadState().then(() => connectSSE());
+        loadOpenRaces();
+        loadCrunRooms();
       }
       // Login başarısız: modal açık kalır, kullanıcı tekrar girer
     })
@@ -1753,6 +1757,8 @@ if (storedName && storedPwd) {
       S.name = storedName;
       $('veil').classList.add('off');
       loadState().then(() => connectSSE());
+      loadOpenRaces();
+      loadCrunRooms();
     });
 }
 
