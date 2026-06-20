@@ -163,32 +163,30 @@ header{
 /* POWER-UP UI */
 #powerupBar{
   position:fixed;bottom:0;left:0;right:0;z-index:60;
-  padding:10px 16px 14px;
-  background:linear-gradient(0deg,rgba(0,0,0,.85) 0%,transparent 100%);
-  display:flex;align-items:center;gap:12px;
+  padding:8px 10px 12px;
+  background:linear-gradient(0deg,rgba(0,0,0,.9) 0%,transparent 100%);
+  display:flex;flex-direction:column;align-items:center;gap:4px;
 }
-#powerupBar.hidden{display:none}
-.pu-box{
-  flex:1;display:flex;align-items:center;gap:10px;
-  background:rgba(6,24,12,.85);border:1px solid var(--bord);border-radius:12px;padding:10px 14px;
+#powerupBar.hidden{display:none!important}
+.pu-bar-row{display:flex;gap:8px;width:100%;max-width:440px;justify-content:center}
+.pu-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 4px 6px;border-radius:10px;min-width:0;
+  border:2px solid rgba(255,255,255,.18);
+  background:rgba(6,24,12,.85);
+  cursor:pointer;transition:border-color .15s,box-shadow .15s,opacity .2s;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
 }
-.pu-icon{font-size:28px;flex-shrink:0}
-.pu-info{flex:1}
-.pu-name{font-size:14px;font-weight:800;letter-spacing:.04em;color:var(--chalk)}
-.pu-hint{font-family:var(--mono);font-size:10px;color:var(--chalk-dim);margin-top:1px}
-.pu-cooldown{height:4px;border-radius:2px;background:rgba(255,255,255,.1);margin-top:6px;overflow:hidden}
-.pu-cooldown-fill{height:100%;background:var(--amber);width:100%;transition:width .1s linear}
-.pu-use-btn{
-  flex-shrink:0;padding:12px 20px;border-radius:12px;
-  background:var(--amber);color:#152b10;
-  font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
-  transition:opacity .15s,transform .1s;active:scale(.96);
+.pu-btn .pu-ico{font-size:22px;line-height:1}
+.pu-btn .pu-lbl{font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--chalk);text-transform:uppercase}
+.pu-btn .pu-key{font-family:var(--mono);font-size:9px;color:var(--chalk-dim)}
+.pu-btn.pu-selected{
+  border-color:#FFD700;
+  box-shadow:0 0 10px #FFD70088;
 }
-.pu-use-btn:disabled{opacity:.3;cursor:not-allowed}
-.pu-empty{
-  flex:1;font-family:var(--mono);font-size:12px;color:var(--chalk-dim);
-  text-align:center;opacity:.6;
-}
+.pu-btn.pu-used{opacity:.25;cursor:not-allowed}
+.pu-bar-hint{font-family:var(--mono);font-size:10px;color:var(--chalk-dim);opacity:.7}
 
 /* FINISHED OVERLAY */
 #finishedOverlay{gap:14px;background:rgba(0,0,0,.85)}
@@ -293,20 +291,29 @@ header{
 
 <!-- Power-up bar -->
 <div id="powerupBar" class="hidden">
-  <div class="pu-box" id="puBox">
-    <div class="pu-empty" id="puEmpty">Güç-up geliyor<span class="waiting-dots"></span></div>
-    <div id="puContent" style="display:none;width:100%;display:none">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="pu-icon" id="puIcon">⚒️</div>
-        <div class="pu-info">
-          <div class="pu-name" id="puName">ÇEKIÇ</div>
-          <div class="pu-hint" id="puHint">En yakın rakibi geri atar</div>
-          <div class="pu-cooldown"><div class="pu-cooldown-fill" id="puCoolFill"></div></div>
-        </div>
-      </div>
-    </div>
+  <div class="pu-bar-row">
+    <button class="pu-btn" id="pu-hammer">
+      <span class="pu-ico">⚒️</span>
+      <span class="pu-lbl">Çekiç</span>
+      <span class="pu-key">[1]</span>
+    </button>
+    <button class="pu-btn" id="pu-boost">
+      <span class="pu-ico">⚡</span>
+      <span class="pu-lbl">Boost</span>
+      <span class="pu-key">[2]</span>
+    </button>
+    <button class="pu-btn" id="pu-freeze">
+      <span class="pu-ico">❄️</span>
+      <span class="pu-lbl">Dondur</span>
+      <span class="pu-key">[3]</span>
+    </button>
+    <button class="pu-btn" id="pu-lightning">
+      <span class="pu-ico">🌩️</span>
+      <span class="pu-lbl">Yıldırım</span>
+      <span class="pu-key">[4]</span>
+    </button>
   </div>
-  <button class="pu-use-btn" id="puUseBtn" disabled>SPACE</button>
+  <div class="pu-bar-hint">Tıkla/dokunarak kullan · SPACE seçili gücü kullanır</div>
 </div>
 
 <!-- Finished overlay -->
@@ -368,11 +375,10 @@ let gameEndAt   = null;
 let playerState = {}; // deviceId → {offset, boosts:[], freezes:[], lane}
 let processedEvents = new Set();
 
-// My power-up
-let myPowerup   = null;  // {type, icon, name, hint}
-let puCooldown  = 0;     // timestamp when cooldown expires
-let puTimer     = null;
-let lastPuGrant = -1;    // which interval has been granted
+// Power-up inventory (4 adet, herbiri 1 kez kullanılır)
+const PU_ORDER  = ['hammer','boost','freeze','lightning'];
+let myInventory = new Set(PU_ORDER); // oyun başında hepsine sahip
+let selectedPu  = 'hammer';          // aktif seçili güç
 
 let animFrame   = null;
 let groundY     = 0;
@@ -680,40 +686,31 @@ function showFlash(color){
 // ============================================================
 // POWER-UP SYSTEM
 // ============================================================
-function grantPowerup(){
-  if (myPowerup) return; // still have one
-  const type = PU_TYPES[Math.floor(Math.random() * PU_TYPES.length)];
-  myPowerup = { type, ...PU_META[type] };
-  showPowerupUI();
+function renderPuBar(){
+  PU_ORDER.forEach(type => {
+    const btn = $id(`pu-${type}`);
+    if (!btn) return;
+    const avail = myInventory.has(type);
+    btn.disabled = !avail;
+    btn.classList.toggle('pu-selected', avail && type === selectedPu);
+    btn.classList.toggle('pu-used',     !avail);
+  });
 }
 
-function showPowerupUI(){
-  if (!myPowerup){ hidePowerupContent(); return; }
-  $id('puEmpty').style.display  = 'none';
-  $id('puContent').style.display = '';
-  $id('puIcon').textContent  = myPowerup.icon;
-  $id('puName').textContent  = myPowerup.name;
-  $id('puHint').textContent  = myPowerup.hint;
-  $id('puUseBtn').disabled   = false;
-  $id('puCoolFill').style.width = '100%';
+function selectPu(type){
+  if (!myInventory.has(type)) return;
+  selectedPu = type;
+  renderPuBar();
 }
 
-function hidePowerupContent(){
-  $id('puEmpty').style.display   = '';
-  $id('puContent').style.display = 'none';
-  $id('puUseBtn').disabled       = true;
-}
+async function usePowerupType(type){
+  if (!myInventory.has(type)) return;
+  if (serverState?.status !== 'active') return;
 
-async function usePowerup(){
-  if (!myPowerup || $id('puUseBtn').disabled) return;
-  if (Date.now() < puCooldown) return;
+  const players = serverState?.players || [];
+  const now     = Date.now();
+  let target    = null;
 
-  const type     = myPowerup.type;
-  const players  = serverState?.players || [];
-  const now      = Date.now();
-
-  // Find nearest opponent
-  let target = null;
   if (type === 'hammer' || type === 'freeze'){
     let bestDiff = Infinity;
     const myDist = getDistance(deviceId, now);
@@ -724,10 +721,12 @@ async function usePowerup(){
     });
   }
 
-  myPowerup = null;
-  hidePowerupContent();
-  puCooldown = now + 8000;
-  startCooldownBar();
+  myInventory.delete(type);
+  // Bir sonraki mevcut gücü seç
+  const next = PU_ORDER.find(t => myInventory.has(t));
+  if (next) selectedPu = next;
+  renderPuBar();
+  flashEffect(PU_META[type]?.color || '#FFD700');
 
   try {
     await fetch(`/api/crun/${roomId}/powerup`, {
@@ -737,23 +736,33 @@ async function usePowerup(){
   } catch{}
 }
 
-function startCooldownBar(){
-  const fill = $id('puCoolFill');
-  const end  = puCooldown;
-  function update(){
-    const rem = (end - Date.now()) / 8000;
-    if (rem <= 0){ fill.style.width = '0%'; return; }
-    fill.style.width = (rem * 100).toFixed(1) + '%';
-    requestAnimationFrame(update);
-  }
-  update();
-}
-
-$id('puUseBtn').onclick = usePowerup;
-document.addEventListener('keydown', e => {
-  if (e.code === 'Space' && serverState?.status === 'active'){
+// Buton olayları
+PU_ORDER.forEach(type => {
+  const btn = $id(`pu-${type}`);
+  if (!btn) return;
+  let _touched = false;
+  btn.addEventListener('touchstart', e => {
     e.preventDefault();
-    usePowerup();
+    _touched = true;
+    usePowerupType(type);
+  }, { passive: false });
+  btn.addEventListener('click', () => {
+    if (_touched){ _touched = false; return; }
+    // Desktop: ilk tıkla seç, seçiliyse kullan
+    if (selectedPu === type) usePowerupType(type);
+    else selectPu(type);
+  });
+});
+
+// Klavye
+document.addEventListener('keydown', e => {
+  if (serverState?.status !== 'active') return;
+  const numMap = { Digit1:'hammer', Digit2:'boost', Digit3:'freeze', Digit4:'lightning',
+                   Numpad1:'hammer', Numpad2:'boost', Numpad3:'freeze', Numpad4:'lightning' };
+  if (numMap[e.code]){ e.preventDefault(); selectPu(numMap[e.code]); return; }
+  if (e.code === 'Space'){
+    e.preventDefault();
+    if (selectedPu && myInventory.has(selectedPu)) usePowerupType(selectedPu);
   }
 });
 
@@ -1017,15 +1026,6 @@ function gameLoop(ts){
       $id('timerFill').style.width = remPct.toFixed(1) + '%';
     }
 
-    // Power-up drop check
-    if (status === 'active' && gameStartAt){
-      const elapsed = now - gameStartAt;
-      const puNum   = Math.floor(elapsed / POWERUP_INTERVAL);
-      if (puNum > lastPuGrant && !myPowerup){
-        lastPuGrant = puNum;
-        grantPowerup();
-      }
-    }
   } else {
     // Draw static pitch in lobby / countdown
     groundY = (groundY - 0.5 + GROUND_TILE * 2) % (GROUND_TILE * 2);
@@ -1062,7 +1062,9 @@ function applyState(state){
       $id('laneLabels').classList.remove('hidden');
       $id('powerupBar').classList.remove('hidden');
       $id('hdrMeta').textContent = `${state.duration}sn — KOŞUYOR!`;
-      lastPuGrant = -1;
+      myInventory = new Set(PU_ORDER); // her oyunda yeni envanter
+      selectedPu  = 'hammer';
+      renderPuBar();
     }
   }
 
