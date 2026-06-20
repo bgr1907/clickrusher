@@ -560,11 +560,6 @@ app.post('/api/crun/:id/join', {
   if (!registeredName) return { ok: false, reason: 'not_logged_in' };
   const result = await crunLib.joinRoom(id, device, registeredName, flag ?? null);
   if (!result.ok) return result;
-  if (result.shouldStart) {
-    const room = await redis.hgetall(`crun:${id}`);
-    await crunLib.beginCountdown(id);
-    scheduleCrunTransitions(id, Number(room.duration));
-  }
   await broadcastCrun(id);
   return { ok: true };
 });
@@ -583,6 +578,28 @@ app.post('/api/crun/:id/set-flag', {
   await crunLib.setFlag(id, device, flag);
   await broadcastCrun(id);
   return { ok: true };
+});
+
+app.post('/api/crun/:id/ready', {
+  schema: { body: { type: 'object', required: ['device'],
+    properties: { device: { type: 'string' } } } },
+  attachValidation: true,
+}, async (req) => {
+  if (req.validationError) return { ok: false, reason: 'invalid' };
+  const { device } = req.body;
+  const { id } = req.params;
+  if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
+  const registeredName = await redis.get(`auth:device:${device}`);
+  if (!registeredName) return { ok: false, reason: 'not_logged_in' };
+  const result = await crunLib.setReady(id, device);
+  if (!result.ok) return result;
+  if (result.allReady) {
+    const room = await redis.hgetall(`crun:${id}`);
+    await crunLib.beginCountdown(id);
+    scheduleCrunTransitions(id, Number(room.duration));
+  }
+  await broadcastCrun(id);
+  return { ok: true, allReady: result.allReady };
 });
 
 app.post('/api/crun/:id/force-start', {

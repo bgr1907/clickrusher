@@ -86,6 +86,7 @@ header{
 .slot-flag img,.slot-flag canvas{width:100%;height:100%;object-fit:cover;display:block}
 .slot-name{flex:1;font-size:13px;font-weight:700}
 .slot-you{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.06em}
+.slot-ready{font-size:16px;flex-shrink:0;margin-left:auto}
 
 /* Flag picker */
 .flag-picker-wrap{
@@ -274,12 +275,13 @@ header{
       <div class="flag-grid" id="flagGrid"></div>
     </div>
 
-    <button class="lobby-btn" id="forceStartBtn" style="display:none;margin-top:12px">
-      Yarışı Başlat →
+    <button class="lobby-btn" id="hazirBtn" style="margin-top:12px" disabled>
+      ✓ HAZIR
     </button>
-    <div class="lobby-note" id="lobbyNote">
-      <span class="waiting-dots">Diğer oyuncular bekleniyor</span>
-    </div>
+    <button class="lobby-btn-sec" id="forceStartBtn" style="display:none">
+      Erken Başlat (Kurucu) →
+    </button>
+    <div class="lobby-note" id="lobbyNote">Bayrak seç ve HAZIR'a bas</div>
   </div>
 </div>
 
@@ -458,11 +460,15 @@ async function sendFlag(){
 // ============================================================
 // LOBBY RENDERING
 // ============================================================
+let myReady = false;
+
 function renderLobby(){
   if (!serverState) return;
   const st = serverState;
   $id('lobbyRoomId').textContent = `ODA: ${roomId}`;
-  $id('hdrMeta').textContent = `${st.duration}sn · ${st.players.length}/4 oyuncu`;
+
+  const readyCount = st.players.filter(p => p.ready).length;
+  $id('hdrMeta').textContent = `${st.duration}sn · ${st.players.length}/4 · ${readyCount} hazır`;
 
   const slotsEl = $id('playerSlots');
   slotsEl.innerHTML = '';
@@ -502,16 +508,54 @@ function renderLobby(){
     div.appendChild(dot);
     div.appendChild(flagWrap);
     div.appendChild(nameEl);
+
+    // Ready indicator
+    if (p){
+      const readyEl = document.createElement('div');
+      readyEl.className = 'slot-ready';
+      readyEl.textContent = p.ready ? '✅' : '⏳';
+      div.appendChild(readyEl);
+    }
+
     slotsEl.appendChild(div);
   });
+
+  // HAZIR butonu — bayrak seçilmişse ve henüz hazır değilse aktif
+  const hazirBtn = $id('hazirBtn');
+  if (myReady){
+    hazirBtn.textContent = '✅ Hazırsın!';
+    hazirBtn.disabled = true;
+    hazirBtn.style.opacity = '.6';
+  } else {
+    hazirBtn.textContent = myFlag ? '✓ HAZIR' : 'Önce bayrak seç';
+    hazirBtn.disabled = !myFlag;
+    hazirBtn.style.opacity = myFlag ? '1' : '.5';
+  }
 
   const amCreator = st.creator === deviceId;
   const canForce  = amCreator && st.players.length >= 2;
   const fsBtn = $id('forceStartBtn');
   fsBtn.style.display = amCreator ? '' : 'none';
   fsBtn.disabled = !canForce;
-  fsBtn.textContent = st.players.length < 2 ? 'Yarışı Başlat (min 2 kişi)' : 'Yarışı Başlat →';
+
+  const allReady = st.players.length >= 2 && st.players.every(p => p.ready);
+  $id('lobbyNote').textContent = allReady
+    ? 'Herkes hazır! Başlıyor...'
+    : `${readyCount}/${st.players.length} kişi hazır`;
 }
+
+$id('hazirBtn').onclick = async () => {
+  if (!myFlag){ alert('Önce bir bayrak seç!'); return; }
+  $id('hazirBtn').disabled = true;
+  try {
+    const res  = await fetch(`/api/crun/${roomId}/ready`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ device: deviceId }),
+    });
+    const data = await res.json();
+    if (data.ok){ myReady = true; renderLobby(); }
+  } catch{ $id('hazirBtn').disabled = false; }
+};
 
 $id('forceStartBtn').onclick = async () => {
   $id('forceStartBtn').disabled = true;
@@ -526,7 +570,11 @@ $id('forceStartBtn').onclick = async () => {
 // ============================================================
 // COUNTDOWN
 // ============================================================
+let _cdInterval = null;
+
 function startCountdown(startAt){
+  if (_cdInterval) return; // çift çağrı koruması
+
   $id('lobbyOverlay').classList.add('hidden');
   $id('countdownOverlay').classList.remove('hidden');
   const cdEl = $id('cdNum');
@@ -534,18 +582,23 @@ function startCountdown(startAt){
   function tick(){
     const rem = Math.ceil((startAt - Date.now()) / 1000);
     if (rem > 0){
-      cdEl.textContent = rem;
-      cdEl.className = 'countdown-num';
-      void cdEl.offsetWidth; // reflow for animation
-      cdEl.className = 'countdown-num';
-      setTimeout(tick, Math.min(startAt - Date.now() - (rem-1)*1000, 800));
+      if (cdEl.textContent !== String(rem)){
+        cdEl.textContent = rem;
+        cdEl.className = '';
+        void cdEl.offsetWidth;
+        cdEl.className = 'countdown-num';
+      }
     } else {
+      clearInterval(_cdInterval);
+      _cdInterval = null;
       cdEl.className = 'countdown-go';
       cdEl.textContent = 'GO!';
       setTimeout(() => $id('countdownOverlay').classList.add('hidden'), 700);
     }
   }
-  tick();
+
+  tick(); // hemen ilk sayıyı göster
+  _cdInterval = setInterval(tick, 200); // 200ms'de bir kontrol et
 }
 
 // ============================================================
@@ -991,10 +1044,9 @@ function applyState(state){
     renderLobby();
   }
 
-  if (status === 'countdown' && startAt){
-    if ($id('lobbyOverlay') && !$id('countdownOverlay').classList.contains('hidden') === false){
-      startCountdown(startAt);
-    }
+  // Countdown: sadece handleSSE / init üzerinden çağrılır (double-call önlemi)
+  if (status === 'countdown'){
+    $id('lobbyOverlay').classList.add('hidden');
   }
 
   if (status === 'active'){
@@ -1004,11 +1056,11 @@ function applyState(state){
       initPlayerState(state.players);
       $id('lobbyOverlay').classList.add('hidden');
       $id('countdownOverlay').classList.add('hidden');
+      if (_cdInterval){ clearInterval(_cdInterval); _cdInterval = null; }
       $id('timerBar').classList.remove('hidden');
       $id('laneLabels').classList.remove('hidden');
       $id('powerupBar').classList.remove('hidden');
       $id('hdrMeta').textContent = `${state.duration}sn — KOŞUYOR!`;
-      // First power-up after 8s
       lastPuGrant = -1;
     }
   }
@@ -1017,8 +1069,8 @@ function applyState(state){
     $id('timerBar').classList.add('hidden');
     $id('powerupBar').classList.add('hidden');
     $id('laneLabels').classList.add('hidden');
+    if (_cdInterval){ clearInterval(_cdInterval); _cdInterval = null; }
     showFinished(state);
-    // Report final distance
     if (gameStartAt){
       const myDist = getDistance(deviceId, Date.now());
       fetch(`/api/crun/${roomId}/distance`, {
@@ -1037,26 +1089,20 @@ function initPlayerState(players){
   });
 }
 
-let countdownShown = false;
-
 function handleSSE(raw){
   let data;
   try { data = JSON.parse(raw); } catch{ return; }
 
-  // Powerup event broadcast
   if (data._event === 'powerup' && data.event){
     applyEvent(data.event);
     return;
   }
 
-  // State update
-  const prev = serverState?.status;
   applyState(data);
 
-  // Trigger countdown transition
-  if (data.status === 'countdown' && data.startAt && !countdownShown){
-    countdownShown = true;
-    startCountdown(data.startAt);
+  // Countdown'ı tek noktadan başlat
+  if (data.status === 'countdown' && data.startAt){
+    startCountdown(data.startAt); // _cdInterval koruması çift çağrıyı önler
   }
 }
 
@@ -1128,8 +1174,8 @@ async function init(){
     const res   = await fetch(`/api/crun/${roomId}/state`);
     const state = await res.json();
     applyState(state);
-    if (state.status === 'countdown' && state.startAt && !countdownShown){
-      countdownShown = true;
+    // Eğer geri sayım başlamışsa hemen göster (_cdInterval koruması çift çağrıyı önler)
+    if (state.status === 'countdown' && state.startAt){
       startCountdown(state.startAt);
     }
   } catch{}
