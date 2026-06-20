@@ -54,7 +54,7 @@ header{
   background:rgba(0,0,0,.72);backdrop-filter:blur(4px);
   padding:16px;
 }
-.overlay.hidden{display:none}
+.overlay.hidden{display:none!important}
 
 /* LOBBY */
 #lobbyOverlay{gap:14px}
@@ -134,7 +134,7 @@ header{
 
 /* COUNTDOWN */
 #countdownOverlay{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  gap:8px;
   background:rgba(0,0,0,.55);
 }
 .countdown-num{
@@ -384,8 +384,9 @@ const flagImgs = {}; // code → HTMLImageElement
 
 function $id(id){ return document.getElementById(id); }
 function getDevice(){
-  let d = localStorage.getItem('deviceId');
-  if (!d){ d = Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem('deviceId',d); }
+  // index.html ile aynı key'i kullan
+  let d = localStorage.getItem('ta26_device');
+  if (!d){ d = Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem('ta26_device',d); }
   return d;
 }
 
