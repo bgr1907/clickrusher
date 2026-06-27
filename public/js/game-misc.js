@@ -19,6 +19,7 @@ async function fetchWCData(){
   let ok=false;
   for(const base of bases){try{await wcFetch(base);ok=true;break;}catch(e){}}
   if(!ok){const el=document.getElementById('gk-teams');if(el&&!wcGames.length)el.innerHTML='<div class="gk-no-match">Fikstür verisi alınamadı.</div>';}
+  if(ok)wcUpdateTeamStandings();
   setTimeout(fetchWCData,5*60*1000);
   scheduleMatchNotifications();
 }
@@ -67,10 +68,10 @@ function brRenderGroups(body){
   }).join('')}</div>`;
 }
 function brRenderKnockout(body){
-  const rounds=['Round of 32','Round of 16','Quarter Final','Semi Final','Third Place','Final'];
-  const roundNames={'Round of 32':'SON 32','Round of 16':'SON 16','Quarter Final':'ÇEYREK FİNAL','Semi Final':'YARI FİNAL','Third Place':'3. LUK','Final':'FİNAL'};
+  const rounds=['r32','r16','qf','sf','3rd','final'];
+  const roundNames={'r32':'SON 32','r16':'SON 16','qf':'ÇEYREK FİNAL','sf':'YARI FİNAL','3rd':'3. LUK','final':'FİNAL'};
   const byRound={};
-  wcGames.forEach(g=>{const r=g.stage||g.round;if(!r||r.toLowerCase().includes('group'))return;if(!byRound[r])byRound[r]=[];byRound[r].push(g);});
+  wcGames.forEach(g=>{const r=g.type;if(!r||r==='group')return;if(!byRound[r])byRound[r]=[];byRound[r].push(g);});
   const ordered=rounds.filter(r=>byRound[r]&&byRound[r].length);
   if(!ordered.length){body.innerHTML='<div class="br-no-data">Eleme turu henüz başlamadı.</div>';return;}
   body.innerHTML=ordered.map(r=>{
@@ -86,6 +87,30 @@ function brRenderKnockout(body){
   }).join('');
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeBracket();}});
+
+// Sync live WC standings into TEAMS array so the flag modal shows real data
+function wcUpdateTeamStandings(){
+  if(!wcGames.length)return;
+  const stats={};
+  wcGames.forEach(g=>{
+    const gr=g.group;if(!gr)return;
+    [g.home_team_id,g.away_team_id].forEach(tid=>{if(!stats[tid])stats[tid]={mp:0,w:0,d:0,l:0,gf:0,ga:0,pts:0};});
+    if(wcIsDone(g)){
+      const hs=parseInt(g.home_score||0),as_=parseInt(g.away_score||0);
+      const ht=stats[g.home_team_id],at=stats[g.away_team_id];
+      if(ht&&at){
+        ht.mp++;at.mp++;ht.gf+=hs;ht.ga+=as_;at.gf+=as_;at.ga+=hs;
+        if(hs>as_){ht.w++;ht.pts+=3;at.l++;}else if(hs<as_){at.w++;at.pts+=3;ht.l++;}else{ht.d++;at.d++;ht.pts++;at.pts++;}
+      }
+    }
+  });
+  Object.keys(stats).forEach(tid=>{
+    const wct=wcTeams[tid];if(!wct)return;
+    const iso2=(wct.iso2||'').toLowerCase();if(!iso2)return;
+    const team=TEAMS.find(t=>t.fc===iso2);
+    if(team)Object.assign(team,stats[tid]);
+  });
+}
 
 // ── RUSH GAME ─────────────────────────────────────────────────────────────
 const RUSH_DURATION=30;
@@ -131,6 +156,12 @@ function rushEnd(){
   const field=document.getElementById('rush-field');if(field)field.querySelectorAll('.rush-target').forEach(el=>el.remove());
   const best=Math.max(rushBestScore(),rushScore);
   localStorage.setItem('CR_RUSH_BEST',String(best));
+  if(S.name&&S.country&&rushScore>0){
+    const n=Math.max(1,Math.min(Math.floor(rushScore/100),10));
+    fetch('/api/clicks',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({device:deviceId,name:S.name,items:[{type:'country',id:S.country,n}],_hp:''})
+    }).catch(()=>{});
+  }
   const endDiv=document.createElement('div');endDiv.className='rush-end-overlay';
   endDiv.innerHTML=`<div class="rush-end-lbl">OYUN BİTTİ</div><div class="rush-end-score">${rushScore}</div><div class="rush-end-lbl">PUAN</div>${rushScore>=best&&rushScore>0?'<div class="rush-end-best">🏆 YENİ REKOR!</div>':''}<button class="rush-start-btn" style="margin-top:16px" onclick="rushRestart()">TEKRAR OYNA</button>`;
   const arena=document.getElementById('rush-arena');if(arena)arena.appendChild(endDiv);
@@ -484,6 +515,12 @@ function qScheduleNext(){
   setTimeout(()=>{QQ_CUR++;if(QQ_CUR>=QQ_TOTAL){qShowGameOver([{...QPLAYER,score:QMY_SCORE}]);}else{qShowQuestion();}},3200);
 }
 function qShowGameOver(players){
+  if(S.name&&S.country&&QMY_SCORE>0){
+    const n=Math.max(1,Math.min(Math.floor(QMY_SCORE/7),10));
+    fetch('/api/clicks',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({device:deviceId,name:S.name,items:[{type:'country',id:S.country,n}],_hp:''})
+    }).catch(()=>{});
+  }
   qShowScreen('qover');
   document.getElementById('qt-over').textContent=qs('over');
   document.getElementById('qt-again').textContent=qs('again');

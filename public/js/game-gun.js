@@ -11,18 +11,21 @@ function gkRenderMatchBarFromFixtures(){
   const shown=fixtures.filter(f=>{
     const t=f.utc?new Date(f.utc).getTime():(f.ko?new Date(f.ko).getTime():0);
     return !t||t>now-2*60*60*1000;
+  }).sort((a,b)=>{
+    const ta=a.utc?new Date(a.utc).getTime():(a.ko?new Date(a.ko).getTime():Infinity);
+    const tb=b.utc?new Date(b.utc).getTime():(b.ko?new Date(b.ko).getTime():Infinity);
+    return ta-tb;
   }).slice(0,6);
   if(!shown.length){inner.innerHTML='<div class="gk-no-match">Yaklaşan maç yok.</div>';return;}
   shown.forEach(f=>{
     const tA=T[f.a],tB=T[f.b];
     const hCC=(tA&&tA.fc)||f.a||'xx';
     const aCC=(tB&&tB.fc)||f.b||'xx';
-    const isLive=S.liveScores&&S.liveScores[f.id];
     const t=f.utc?new Date(f.utc):(f.ko?new Date(f.ko):null);
     const gmtTime=t?t.toLocaleTimeString('tr-TR',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'})+' GMT':'—';
     const card=document.createElement('div');
     card.className='gk-mbar-card'+(cbMatchId===f.id?' active':'');
-    card.innerHTML=`<div class="gk-mbar-flags"><img class="gk-mbar-flag" src="https://flagcdn.com/w40/${hCC}.png" alt=""><span class="gk-mbar-sep">-</span><img class="gk-mbar-flag" src="https://flagcdn.com/w40/${aCC}.png" alt=""></div><div><div class="gk-mbar-time${isLive?' live':''}">${isLive?'🔴 CANLI':gmtTime}</div></div>`;
+    card.innerHTML=`<div class="gk-mbar-flags"><img class="gk-mbar-flag" src="https://flagcdn.com/w40/${hCC}.png" alt=""><span class="gk-mbar-sep">-</span><img class="gk-mbar-flag" src="https://flagcdn.com/w40/${aCC}.png" alt=""></div><div><div class="gk-mbar-time">${gmtTime}</div></div>`;
     card.onclick=()=>{
       inner.querySelectorAll('.gk-mbar-card').forEach(c=>c.classList.remove('active'));
       card.classList.add('active');
@@ -43,7 +46,17 @@ function gkSelectFixture(f){
 function initGunTab(){
   gkRenderMatchBarFromFixtures();
   const fixtures=S.fixtures||[];
-  if(fixtures.length)gkSelectFixture(fixtures[0]);
+  if(!fixtures.length)return;
+  const now=Date.now();
+  const upcoming=fixtures.filter(f=>{
+    const t=f.utc?new Date(f.utc).getTime():(f.ko?new Date(f.ko).getTime():0);
+    return !t||t>now-2*60*60*1000;
+  }).sort((a,b)=>{
+    const ta=a.utc?new Date(a.utc).getTime():(a.ko?new Date(a.ko).getTime():Infinity);
+    const tb=b.utc?new Date(b.utc).getTime():(b.ko?new Date(b.ko).getTime():Infinity);
+    return ta-tb;
+  });
+  gkSelectFixture(upcoming.length?upcoming[0]:fixtures[0]);
 }
 
 // ── CLICK BATTLE ─────────────────────────────────────────────────────────
@@ -90,7 +103,7 @@ function cbUpdateLock(isLive){
   if(hLock)hLock.style.display=locked?'':'none';
   if(aLock)aLock.style.display=locked?'':'none';
   if(cdEl){
-    if(isLive){cdEl.textContent='🔴 CANLI';cdEl.className='gk-countdown live';}
+    if(isLive){cdEl.textContent='CANLI';cdEl.className='gk-countdown';}
     else if(locked&&cbMatchTime){
       const diff=cbMatchTime-now;
       const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
