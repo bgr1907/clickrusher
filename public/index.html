@@ -1017,6 +1017,89 @@ header{
 .wiz-btn{width:100%;padding:12px;border-radius:10px;background:linear-gradient(135deg,#006699,#00C8FF);color:#fff;font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;box-shadow:0 4px 20px rgba(0,200,255,.3);}
 .wiz-btn-sec{width:100%;padding:10px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--bord);color:var(--chalk-dim);font-size:14px;font-weight:700;letter-spacing:.06em;}
 .wiz-back-btn{font-size:13px;font-weight:700;color:var(--chalk-dim);padding:4px 8px;letter-spacing:.06em}
+
+/* ── MOBILE RESPONSIVE ──────────────────────────────────────── */
+
+/* Tablet: ≤768px — reduce logo, top-3, nations gap */
+@media(max-width:768px){
+  .logo-text{font-size:44px;letter-spacing:4px;}
+  .top3-grid{gap:48px;}
+  .flag-circ{width:160px;height:160px;}
+  .medal.g{transform:translateY(14px);}
+  .medal.s,.medal.b{transform:translateY(64px);}
+  .nations-grid{grid-template-columns:repeat(3,1fr);column-gap:0;gap:32px;justify-items:center;}
+}
+
+/* Mobile: ≤480px — all critical fixes */
+@media(max-width:480px){
+  /* Header */
+  header{padding:10px 14px;}
+  .logo-text{font-size:28px;letter-spacing:2px;}
+  .logo-sub{font-size:10px;letter-spacing:5px;}
+  .header-right{right:12px;}
+  .clock-zones,.clock-gmt{display:none;}
+  .clock-time{font-size:15px;letter-spacing:1px;}
+
+  /* Tabs: horizontal scroll so long names don't wrap */
+  .tabs{justify-content:flex-start;overflow-x:auto;padding:0 6px;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{font-size:14px;padding:10px 14px;letter-spacing:1px;
+    flex-shrink:0;white-space:nowrap;}
+
+  /* Stats bar */
+  .stats{padding:8px 6px;gap:3px;}
+  .stat{padding:8px 6px;}
+  .stat-val{font-size:17px;}
+  .stat-val.cyan{font-size:14px;gap:4px;}
+  .rank-chip{width:22px;height:22px;font-size:9px;}
+  .stat-lbl{font-size:8px;letter-spacing:1.5px;}
+
+  /* Top-3 medals */
+  .top3-grid{gap:12px;}
+  .flag-circ{width:90px;height:90px;}
+  .medal.g{transform:translateY(8px);}
+  .medal.s,.medal.b{transform:translateY(37px);}
+  .medal-name{font-size:12px;}
+  .medal-pts{font-size:11px;}
+  .top3-title{font-size:22px;letter-spacing:6px;}
+  .top3-title-wrap{padding:6px 16px;}
+
+  /* Nations grid: 2 columns */
+  .nations-section{margin-top:32px;}
+  .nations-grid{grid-template-columns:repeat(2,1fr);column-gap:0;gap:20px;justify-items:center;}
+  .nf-circ{width:100px;height:100px;}
+  .nf-pts-wrap{width:100px;}
+  .nf-name{font-size:13px;max-width:110px;}
+  .nations-title{font-size:15px;letter-spacing:2px;}
+
+  /* Auth modal + quiz country grid */
+  .auth-box{padding:20px 14px 18px;}
+  .auth-country-grid{grid-template-columns:repeat(4,1fr);max-height:160px;}
+  #panel-quiz #cgrid{grid-template-columns:repeat(4,1fr);}
+
+  /* Flag picker */
+  .fp-box{padding:16px;}
+  .fp-grid{grid-template-columns:repeat(4,1fr);}
+
+  /* GK battle */
+  .gk-charge-wrap{width:80px;height:80px;}
+
+  /* Wizard */
+  .wiz-body{padding:14px 12px;}
+}
+
+/* Small phones: ≤360px */
+@media(max-width:360px){
+  .logo-text{font-size:22px;letter-spacing:1px;}
+  .logo-sub{font-size:9px;letter-spacing:3px;}
+  .tab{font-size:12px;padding:9px 11px;}
+  .nations-grid{gap:14px;}
+  .nf-circ{width:80px;height:80px;}
+  .nf-pts-wrap{width:80px;}
+  .auth-country-grid{grid-template-columns:repeat(3,1fr);}
+  .fp-grid{grid-template-columns:repeat(3,1fr);}
+}
 </style>
 </head>
 <body>
