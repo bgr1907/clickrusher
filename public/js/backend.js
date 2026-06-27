@@ -10,6 +10,7 @@ const deviceId=(()=>{ let d=localStorage.getItem('ta26_device'); if(!d){d=genId(
 // ── STATE ─────────────────────────────────────────────────────────────
 const S = {
   name: localStorage.getItem('ta26_name') || '',
+  email: localStorage.getItem('ta26_email') || '',
   mineTotal: 0,
   minePerTeam: {},
   grid: {},
@@ -126,11 +127,23 @@ function openAuthModal() {
   if (m) m.classList.remove('hidden');
   buildAuthCGrid();
 }
+function _resetRegisterForm() {
+  const s1=$('af-reg-step1'), s2=$('af-reg-step2');
+  if(s1) s1.style.display='';
+  if(s2) s2.style.display='none';
+  $('re-err')  && ($('re-err').textContent='');
+  $('re-err1') && ($('re-err1').textContent='');
+  // Ülke seçimini sıfırla
+  _authSelectedCountry = '';
+  const grid=$('auth-cgrid');
+  if(grid) grid.querySelectorAll('.acc.sel').forEach(x=>x.classList.remove('sel'));
+}
+
 function closeAuthModal() {
   const m = $('auth-modal');
   if (m) m.classList.add('hidden');
   $('li-err') && ($('li-err').textContent='');
-  $('re-err') && ($('re-err').textContent='');
+  _resetRegisterForm();
 }
 function authTab(tab) {
   const isLogin = tab !== 'register';
@@ -138,6 +151,7 @@ function authTab(tab) {
   $('atab-register') && $('atab-register').classList.toggle('on', !isLogin);
   $('af-login')      && ($('af-login').style.display    = isLogin ? '' : 'none');
   $('af-register')   && ($('af-register').style.display = isLogin ? 'none' : '');
+  if (isLogin) _resetRegisterForm();
 }
 
 function buildAuthCGrid() {
@@ -164,57 +178,89 @@ function togglePw(id, btn) {
 }
 
 async function authLogin() {
-  const nick = ($('li-nick')?.value || '').trim();
-  const pw   = ($('li-pw')?.value  || '');
+  const nameOrEmail = ($('li-nick')?.value || '').trim();
+  const pw          = ($('li-pw')?.value  || '');
   const errEl = $('li-err');
-  if (!nick || !pw) { if(errEl) errEl.textContent='Kullanıcı adı ve şifre gerekli'; return; }
+  if (!nameOrEmail || !pw) { if(errEl) errEl.textContent='E-posta / kullanıcı adı ve şifre gerekli'; return; }
   const btn = $('li-btn');
   if (btn) btn.disabled = true;
   try {
-    const res  = await fetch('/api/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nick,password:pw})});
+    const res  = await fetch('/api/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:deviceId,name:nameOrEmail,password:pw})});
     const data = await res.json();
     if (data.ok) {
-      S.name = nick;
+      S.name    = data.name;
+      S.email   = data.email || '';
       S.country = data.country || '';
-      localStorage.setItem('ta26_name', nick);
+      localStorage.setItem('ta26_name', data.name);
       localStorage.setItem('ta26_pwd',  pw);
+      if (data.email)   localStorage.setItem('ta26_email', data.email);
       if (data.country) localStorage.setItem('ta26_country', data.country);
       closeAuthModal();
       updateUserChip();
       updateChatUI();
       checkPendingRace();
     } else {
-      if (errEl) errEl.textContent = data.reason === 'not_found' ? 'Kullanıcı bulunamadı' : data.reason === 'wrong_password' ? 'Şifre hatalı' : (data.reason || 'Hata');
+      const msgs = {not_found:'Kullanıcı bulunamadı',wrong_password:'Şifre hatalı'};
+      if (errEl) errEl.textContent = msgs[data.reason] || data.reason || 'Giriş başarısız';
     }
   } catch { if (errEl) errEl.textContent = 'Bağlantı hatası'; }
   if (btn) btn.disabled = false;
 }
 
+// Adım 1: E-posta + şifre doğrulama
+let _regEmail = '', _regPw = '';
+function authRegisterStep1() {
+  const email = ($('re-email')?.value || '').trim();
+  const pw    = ($('re-pw')?.value    || '');
+  const pw2   = ($('re-pw2')?.value   || '');
+  const errEl = $('re-err1');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { if(errEl) errEl.textContent='Geçerli bir e-posta adresi gir'; return; }
+  if (pw.length < 6)  { if(errEl) errEl.textContent='Şifre en az 6 karakter olmalı'; return; }
+  if (pw !== pw2)     { if(errEl) errEl.textContent='Şifreler eşleşmiyor'; return; }
+  if (errEl) errEl.textContent = '';
+  _regEmail = email;
+  _regPw    = pw;
+  $('af-reg-step1').style.display = 'none';
+  $('af-reg-step2').style.display = '';
+  buildAuthCGrid();
+  $('re-nick')?.focus();
+}
+
+function authRegisterBack() {
+  $('af-reg-step2').style.display = 'none';
+  $('af-reg-step1').style.display = '';
+}
+
+const NICK_RE = /^[a-zA-Z0-9ğüşıöçĞÜŞİÖÇ_\-]{2,15}$/u;
+
+// Adım 2: Nick + ülke → kayıt tamamla
 async function authRegister() {
-  const nick = ($('re-nick')?.value || '').trim();
-  const pw   = ($('re-pw')?.value  || '');
-  const pw2  = ($('re-pw2')?.value || '');
+  const nick  = ($('re-nick')?.value || '').trim();
   const errEl = $('re-err');
-  if (!nick || nick.length < 2) { if(errEl) errEl.textContent='En az 2 karakter kullanıcı adı gir'; return; }
-  if (!_authSelectedCountry)    { if(errEl) errEl.textContent='Bir ülke seç'; return; }
-  if (pw.length < 6)            { if(errEl) errEl.textContent='Şifre en az 6 karakter olmalı'; return; }
-  if (pw !== pw2)               { if(errEl) errEl.textContent='Şifreler eşleşmiyor'; return; }
+  if (!nick || nick.length < 2)    { if(errEl) errEl.textContent='En az 2 karakter kullanıcı adı gir'; return; }
+  if (!NICK_RE.test(nick))         { if(errEl) errEl.textContent='Sadece harf, rakam, _ ve - kullanabilirsin (boşluk yok)'; return; }
+  if (!_authSelectedCountry)       { if(errEl) errEl.textContent='Bir ülke seç'; return; }
   const btn = $('re-btn');
   if (btn) btn.disabled = true;
   try {
-    const res  = await fetch('/api/register', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nick,password:pw,country:_authSelectedCountry})});
+    const res  = await fetch('/api/register', {method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({device:deviceId,name:nick,password:_regPw,email:_regEmail,country:_authSelectedCountry})});
     const data = await res.json();
     if (data.ok) {
-      S.name = nick;
+      S.name    = data.name;
+      S.email   = data.email || _regEmail;
       S.country = _authSelectedCountry;
-      localStorage.setItem('ta26_name', nick);
-      localStorage.setItem('ta26_pwd',  pw);
+      localStorage.setItem('ta26_name',    data.name);
+      localStorage.setItem('ta26_pwd',     _regPw);
+      localStorage.setItem('ta26_email',   S.email);
       localStorage.setItem('ta26_country', _authSelectedCountry);
+      _regEmail = ''; _regPw = '';
       closeAuthModal();
       updateUserChip();
       updateChatUI();
     } else {
-      if (errEl) errEl.textContent = data.reason === 'taken' ? 'Bu kullanıcı adı alınmış' : data.reason === 'badword' ? 'Uygunsuz kullanıcı adı' : (data.reason || 'Hata');
+      const msgs = {taken:'Bu kullanıcı adı alınmış',email_taken:'Bu e-posta zaten kayıtlı',badword:'Uygunsuz kullanıcı adı',invalid_password:'Şifre geçersiz',invalid:'Kullanıcı adı geçersiz (harf, rakam, _ ve - kullanabilirsin)',email_required:'E-posta zorunludur'};
+      if (errEl) errEl.textContent = msgs[data.reason] || data.reason || 'Kayıt başarısız';
     }
   } catch { if (errEl) errEl.textContent = 'Bağlantı hatası'; }
   if (btn) btn.disabled = false;
@@ -222,11 +268,13 @@ async function authRegister() {
 
 function doLogout() {
   S.name = '';
+  S.email = '';
   S.country = '';
   S.mineTotal = 0;
   S.minePerTeam = {};
   localStorage.removeItem('ta26_name');
   localStorage.removeItem('ta26_pwd');
+  localStorage.removeItem('ta26_email');
   localStorage.removeItem('ta26_country');
   updateUserChip();
   updateChatUI();
@@ -360,9 +408,11 @@ function openProfile() {
   ov.classList.add('open');
   const av = $('prof-av');
   const nm = $('prof-dispname');
+  const em = $('prof-dispemail');
   const pt = $('prof-total');
   if (av) { const t=T[S.country]; av.innerHTML = t ? `<img src="${FLAG_SM}${t.fc}.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : (S.name?S.name[0].toUpperCase():'👤'); }
   if (nm) nm.textContent = S.name || '—';
+  if (em) { em.textContent = S.email || ''; em.style.display = S.email ? '' : 'none'; }
   if (pt) pt.textContent = `Toplam: ${S.mineTotal.toLocaleString('tr')} puan`;
 }
 function closeProfile() {
