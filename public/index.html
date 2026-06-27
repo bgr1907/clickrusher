@@ -104,8 +104,10 @@ header{
   text-shadow:0 0 30px rgba(0,200,255,.8),0 0 60px rgba(0,200,255,.35),0 2px 0 rgba(0,0,0,.6);
 }
 .logo-sub{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:12px;color:var(--cyan);margin-top:1px;}
-/* right side: clock + user chip */
-.header-right{position:absolute;right:24px;display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+/* right side: user-chip (left) + clock-col (right) */
+.header-right{position:absolute;right:24px;top:50%;transform:translateY(-50%);display:flex;flex-direction:row;align-items:center;gap:14px;}
+.header-right .user-chip{margin-top:0;}
+.clock-col{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
 .clock-time{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:2px;color:#fff;line-height:1;}
 .clock-zones{display:flex;gap:4px;margin-top:2px;}
 .tz-btn{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:800;letter-spacing:1px;padding:2px 5px;border-radius:3px;border:none;cursor:pointer;background:rgba(255,255,255,.08);color:var(--dim2);transition:all .15s;}
@@ -1033,7 +1035,7 @@ header{
   .medal.s,.medal.b{transform:translateY(64px);}
   .nations-grid{grid-template-columns:repeat(3,1fr);column-gap:0;gap:32px;justify-items:center;}
   .clock-zones,.clock-gmt{display:none;}
-  .header-right{right:16px;top:50%;transform:translateY(-50%);gap:3px;}
+  .header-right{right:16px;gap:3px;}
   .header-right .user-chip{display:none;}
   #user-bar{display:flex;justify-content:flex-end;align-items:center;padding:5px 16px 4px;background:rgba(0,0,9,.97);border-bottom:1px solid rgba(0,200,255,.08);}
 }
@@ -1200,20 +1202,22 @@ header{
     <div class="logo-sub">TOURNAMENT 2026</div>
   </a>
   <div class="header-right">
-    <div class="clock-time" id="clock-time">00:00:00</div>
-    <div class="clock-zones">
-      <button class="tz-btn active" data-offset="3">TR</button>
-      <button class="tz-btn" data-offset="-4">ET</button>
-      <button class="tz-btn" data-offset="-7">PT</button>
-    </div>
-    <div class="clock-gmt" id="clock-gmt">GMT+3</div>
-    <div class="header-lang">
-      <button class="hlang-btn" id="hlang-tr" onclick="setUiLang('tr')" title="Türkçe"><img src="https://flagcdn.com/w40/tr.png" alt="TR"></button>
-      <button class="hlang-btn" id="hlang-en" onclick="setUiLang('en')" title="English"><img src="https://flagcdn.com/w40/gb.png" alt="EN"></button>
-    </div>
     <div class="user-chip" id="user-chip">
       <div class="uavatar" id="user-avatar">👤</div>
       <div class="user-name" id="user-name">Giriş Yap</div>
+    </div>
+    <div class="clock-col">
+      <div class="clock-time" id="clock-time">00:00:00</div>
+      <div class="clock-zones">
+        <button class="tz-btn active" data-offset="3">TR</button>
+        <button class="tz-btn" data-offset="-4">ET</button>
+        <button class="tz-btn" data-offset="-7">PT</button>
+      </div>
+      <div class="clock-gmt" id="clock-gmt">GMT+3</div>
+      <div class="header-lang">
+        <button class="hlang-btn" id="hlang-tr" onclick="setUiLang('tr')" title="Türkçe"><img src="https://flagcdn.com/w40/tr.png" alt="TR"></button>
+        <button class="hlang-btn" id="hlang-en" onclick="setUiLang('en')" title="English"><img src="https://flagcdn.com/w40/gb.png" alt="EN"></button>
+      </div>
     </div>
   </div>
 </header>
