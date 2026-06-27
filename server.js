@@ -10,7 +10,7 @@ if (process.env.NODE_ENV !== 'test') {
 const path     = require('path');
 const fs       = require('fs');
 const Fastify  = require('fastify');
-const { applyLimits }    = require('./lib/ratelimit');
+const { applyLimits, authLimit } = require('./lib/ratelimit');
 const counters           = require('./lib/counters');
 const { registerUser, loginUser } = require('./lib/auth');
 const { containsBadWord }         = require('./lib/badwords');
@@ -116,6 +116,8 @@ app.post('/api/register', {
   attachValidation: true,
 }, async (req) => {
   if (req.validationError) return { ok: false, reason: 'invalid' };
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ?? req.ip ?? '0.0.0.0';
+  if (!authLimit(ip, 'register')) return { ok: false, reason: 'rate_limited' };
   const { device, name, password, email, country } = req.body;
   if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
   if (!PWD_RE.test(String(password ?? '')))  return { ok: false, reason: 'invalid_password' };
@@ -134,6 +136,8 @@ app.post('/api/login', {
   attachValidation: true,
 }, async (req) => {
   if (req.validationError) return { ok: false, reason: 'invalid' };
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ?? req.ip ?? '0.0.0.0';
+  if (!authLimit(ip, 'login')) return { ok: false, reason: 'rate_limited' };
   const { device, name, password } = req.body;
   if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
   return loginUser(device, String(name ?? ''), String(password ?? ''));

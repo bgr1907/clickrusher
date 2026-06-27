@@ -200,7 +200,11 @@ async function authLogin() {
       updateChatUI();
       checkPendingRace();
     } else {
-      const msgs = {not_found:'Kullanıcı bulunamadı',wrong_password:'Şifre hatalı'};
+      const msgs = {
+        not_found:'Kullanıcı bulunamadı',wrong_password:'Şifre hatalı',
+        invalid_credentials:'Kullanıcı adı veya şifre hatalı',
+        rate_limited:'Çok fazla deneme, lütfen biraz bekle',
+      };
       if (errEl) errEl.textContent = msgs[data.reason] || data.reason || 'Giriş başarısız';
     }
   } catch { if (errEl) errEl.textContent = 'Bağlantı hatası'; }
@@ -259,7 +263,7 @@ async function authRegister() {
       updateUserChip();
       updateChatUI();
     } else {
-      const msgs = {taken:'Bu kullanıcı adı alınmış',email_taken:'Bu e-posta zaten kayıtlı',badword:'Uygunsuz kullanıcı adı',invalid_password:'Şifre geçersiz',invalid:'Kullanıcı adı geçersiz (harf, rakam, _ ve - kullanabilirsin)',email_required:'E-posta zorunludur'};
+      const msgs = {taken:'Bu kullanıcı adı alınmış',email_taken:'Bu e-posta zaten kayıtlı',badword:'Uygunsuz kullanıcı adı',invalid_password:'Şifre geçersiz',invalid:'Kullanıcı adı geçersiz (harf, rakam, _ ve - kullanabilirsin)',email_required:'E-posta zorunludur',rate_limited:'Çok fazla deneme, lütfen biraz bekle'};
       if (errEl) errEl.textContent = msgs[data.reason] || data.reason || 'Kayıt başarısız';
     }
   } catch { if (errEl) errEl.textContent = 'Bağlantı hatası'; }
