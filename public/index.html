@@ -1305,8 +1305,8 @@ header{
     <div id="qsel-guest-login" style="display:none;width:100%;max-width:360px;margin-bottom:14px">
       <div style="background:#fff;border-radius:16px;padding:18px 20px;color:#222;box-shadow:0 6px 30px rgba(0,0,0,.25)">
         <p style="font-size:.88rem;color:#555;margin-bottom:12px;text-align:center">Puan kazanmak için giriş yap veya kayıt ol</p>
-        <input type="text" class="tin" id="q-li-nick" maxlength="15" placeholder="Kullanıcı adı" style="margin-top:0">
-        <input type="password" class="tin" id="q-li-pw" placeholder="Şifre" style="margin-top:8px">
+        <input type="text" class="tin" id="q-li-nick" maxlength="100" placeholder="E-posta veya kullanıcı adı" style="margin-top:0" autocomplete="username">
+        <input type="password" class="tin" id="q-li-pw" placeholder="Şifre" style="margin-top:8px" autocomplete="current-password">
         <button class="qbtn qbtn-primary" style="margin-top:10px" onclick="qLoginInline()">Giriş Yap</button>
         <p id="q-li-err" style="color:#e53935;font-size:.8rem;text-align:center;margin-top:6px;display:none"></p>
         <div style="text-align:center;margin-top:10px">
@@ -1455,6 +1455,7 @@ header{
       <div class="prof-avatar-circle" id="prof-av">👤</div>
       <div class="prof-info">
         <div class="prof-name" id="prof-dispname">—</div>
+        <div class="prof-email" id="prof-dispemail" style="display:none"></div>
         <div class="prof-email" id="prof-total">Toplam: 0 puan</div>
       </div>
     </div>
@@ -1576,13 +1577,13 @@ header{
     <!-- GİRİŞ -->
     <div id="af-login">
       <div class="auth-fld">
-        <label class="auth-lbl">Kullanıcı Adı</label>
-        <input class="auth-inp" type="text" id="li-nick" maxlength="15" placeholder="Kullanıcı adınız">
+        <label class="auth-lbl">E-posta veya Kullanıcı Adı</label>
+        <input class="auth-inp" type="text" id="li-nick" maxlength="100" placeholder="ornek@email.com veya kullanıcı adı" autocomplete="username">
       </div>
       <div class="auth-fld">
         <label class="auth-lbl">Şifre</label>
         <div class="pw-wrap">
-          <input class="auth-inp" type="password" id="li-pw" placeholder="••••••••">
+          <input class="auth-inp" type="password" id="li-pw" placeholder="••••••••" autocomplete="current-password">
           <button class="pw-eye" type="button" onclick="togglePw('li-pw',this)" tabindex="-1">👁</button>
         </div>
       </div>
@@ -1593,8 +1594,12 @@ header{
     <!-- KAYIT -->
     <div id="af-register" style="display:none">
       <div class="auth-fld">
+        <label class="auth-lbl">E-posta <span style="font-size:.75rem;color:var(--dim)">(isteğe bağlı)</span></label>
+        <input class="auth-inp" type="email" id="re-email" maxlength="100" placeholder="ornek@email.com" autocomplete="email">
+      </div>
+      <div class="auth-fld">
         <label class="auth-lbl">Kullanıcı Adı</label>
-        <input class="auth-inp" type="text" id="re-nick" maxlength="15" placeholder="SuperFatih (en az 2 karakter)">
+        <input class="auth-inp" type="text" id="re-nick" maxlength="15" placeholder="SuperFatih (en az 2 karakter)" autocomplete="username">
       </div>
       <div class="auth-fld">
         <label class="auth-lbl">Ülken (turnuvada temsil edeceğin)</label>
@@ -1603,14 +1608,14 @@ header{
       <div class="auth-fld">
         <label class="auth-lbl">Şifre <span class="caps-warn" id="caps-warn" style="display:none">⚠ CAPS LOCK açık</span></label>
         <div class="pw-wrap">
-          <input class="auth-inp" type="password" id="re-pw" maxlength="12" placeholder="6–12 karakter">
+          <input class="auth-inp" type="password" id="re-pw" maxlength="12" placeholder="6–12 karakter" autocomplete="new-password">
           <button class="pw-eye" type="button" onclick="togglePw('re-pw',this)" tabindex="-1">👁</button>
         </div>
       </div>
       <div class="auth-fld">
         <label class="auth-lbl">Şifre Tekrar</label>
         <div class="pw-wrap">
-          <input class="auth-inp" type="password" id="re-pw2" maxlength="12" placeholder="Şifrenizi tekrar girin">
+          <input class="auth-inp" type="password" id="re-pw2" maxlength="12" placeholder="Şifrenizi tekrar girin" autocomplete="new-password">
           <button class="pw-eye" type="button" onclick="togglePw('re-pw2',this)" tabindex="-1">👁</button>
         </div>
       </div>

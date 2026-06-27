@@ -6,8 +6,18 @@
   const pwd=localStorage.getItem('ta26_pwd');
   if(name&&pwd){
     try{
-      const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,password:pwd})});
-      if(r.ok){const data=await r.json();S.name=data.name||name;S.country=data.country||localStorage.getItem('ta26_country')||'';updateUserChip();}
+      const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:deviceId,name,password:pwd})});
+      if(r.ok){
+        const data=await r.json();
+        if(data.ok){
+          S.name=data.name||name;
+          S.email=data.email||localStorage.getItem('ta26_email')||'';
+          S.country=data.country||localStorage.getItem('ta26_country')||'';
+          if(data.name)localStorage.setItem('ta26_name',data.name);
+          if(data.email)localStorage.setItem('ta26_email',data.email);
+          updateUserChip();
+        }
+      }
     }catch(e){}
   }
   await loadState();

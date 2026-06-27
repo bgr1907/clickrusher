@@ -295,16 +295,21 @@ async function qLoginInline(){
   const pwEl=document.getElementById('q-li-pw');
   const errEl=document.getElementById('q-li-err');
   if(!nickEl||!pwEl)return;
-  const nick=nickEl.value.trim(),pw=pwEl.value;
-  if(!nick||!pw){if(errEl){errEl.textContent='Kullanıcı adı ve şifre girin.';errEl.style.display='';}return;}
+  const nameOrEmail=nickEl.value.trim(),pw=pwEl.value;
+  if(!nameOrEmail||!pw){if(errEl){errEl.textContent='E-posta / kullanıcı adı ve şifre girin.';errEl.style.display='';}return;}
   if(errEl){errEl.textContent='';errEl.style.display='none';}
   try{
-    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nick,password:pw})});
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:deviceId,name:nameOrEmail,password:pw})});
     const data=await r.json();
-    if(!r.ok){if(errEl){errEl.textContent=data.error||'Giriş hatası';errEl.style.display='';}return;}
-    localStorage.setItem('ta26_name',data.name||nick);
+    if(!data.ok){
+      const msgs={not_found:'Kullanıcı bulunamadı',wrong_password:'Şifre hatalı'};
+      if(errEl){errEl.textContent=msgs[data.reason]||data.reason||'Giriş hatası';errEl.style.display='';}
+      return;
+    }
+    S.name=data.name;S.email=data.email||'';S.country=data.country||'';
+    localStorage.setItem('ta26_name',data.name);
+    if(data.email)localStorage.setItem('ta26_email',data.email);
     if(data.country)localStorage.setItem('ta26_country',data.country);
-    S.name=data.name||nick;S.country=data.country||'';
     updateUserChip();qUpdateSelScreen();
   }catch(e){if(errEl){errEl.textContent='Bağlantı hatası';errEl.style.display='';}}
 }
