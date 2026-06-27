@@ -428,8 +428,8 @@ function closeProfile() {
 function openSettings()  { const m=$('settings-modal'); if(m) m.classList.remove('hidden'); updateNotifStatus(); }
 function closeSettings() { const m=$('settings-modal'); if(m) m.classList.add('hidden'); }
 function setUiLang(lang) {
-  document.querySelectorAll('[id^="slang-"]').forEach(b=>b.classList.remove('on'));
-  const btn=$('slang-'+lang); if(btn) btn.classList.add('on');
+  document.querySelectorAll('[id^="hlang-"]').forEach(b=>b.classList.remove('on'));
+  const btn=$('hlang-'+lang); if(btn) btn.classList.add('on');
   localStorage.setItem('ta26_lang', lang);
 }
 function updateNotifStatus() {
@@ -533,4 +533,10 @@ function checkPendingRace(){
 document.addEventListener('keydown', e => {
   const w=$('caps-warn');
   if(w) w.style.display=e.getModifierState('CapsLock')?'':'none';
+});
+
+// ── INIT LANG ─────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('ta26_lang') || 'tr';
+  setUiLang(saved);
 });
