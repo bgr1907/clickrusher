@@ -286,32 +286,35 @@ function doLogout() {
 }
 
 function updateUserChip() {
-  const nameEl = $('user-name');
-  const avEl   = $('user-avatar');
-  if (!nameEl) return;
-  if (S.name) {
-    nameEl.textContent = S.name;
-    const t = T[S.country];
-    if (avEl && t) {
-      avEl.innerHTML = `<img src="${FLAG_SM}${t.fc}.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-    } else if (avEl) {
-      avEl.textContent = S.name[0].toUpperCase();
+  const ln = localStorage.getItem('ta26_lang') || 'tr';
+  const loginText = (I18N[ln] || I18N.tr)['login-text'];
+  [['user-name', 'user-avatar'], ['user-name-m', 'user-avatar-m']].forEach(([nid, aid]) => {
+    const nameEl = $(nid);
+    const avEl   = $(aid);
+    if (!nameEl) return;
+    if (S.name) {
+      nameEl.textContent = S.name;
+      const t = T[S.country];
+      if (avEl && t) {
+        avEl.innerHTML = `<img src="${FLAG_SM}${t.fc}.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      } else if (avEl) {
+        avEl.textContent = S.name[0].toUpperCase();
+      }
+    } else {
+      nameEl.textContent = loginText;
+      if (avEl) avEl.textContent = '👤';
     }
-  } else {
-    const ln = localStorage.getItem('ta26_lang') || 'tr';
-    nameEl.textContent = (I18N[ln] || I18N.tr)['login-text'];
-    if (avEl) avEl.textContent = '👤';
-  }
+  });
 }
 
-// user-chip tıklaması
-(()=>{
-  const chip = $('user-chip');
+// user-chip tıklaması (desktop + mobile)
+['user-chip', 'user-chip-m'].forEach(id => {
+  const chip = $(id);
   if (chip) chip.addEventListener('click', () => {
     if (S.name) openProfile();
     else openAuthModal();
   });
-})();
+});
 
 // ── CHAT ─────────────────────────────────────────────────────────────
 const chatState = { fixId: null, polling: null, lastId: 0, cooldownUntil: 0 };
@@ -556,8 +559,9 @@ function setUiLang(lang) {
     if (t[k] !== undefined) el.innerHTML = t[k];
   });
   if (!S.name) {
-    const uname = $('user-name');
-    if (uname) uname.textContent = t['login-text'];
+    ['user-name', 'user-name-m'].forEach(id => {
+      const el = $(id); if (el) el.textContent = t['login-text'];
+    });
   }
   if (typeof qSetLang === 'function') qSetLang(lang);
 }

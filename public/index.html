@@ -113,10 +113,13 @@ header{
 .tz-btn:hover:not(.active){background:rgba(255,255,255,.15);color:#fff;}
 .clock-gmt{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--dim);text-align:right;}
 /* header lang toggle */
-.header-lang{display:flex;gap:4px;margin-top:2px;}
-.hlang-btn{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:1px;padding:3px 7px;border-radius:4px;border:1px solid rgba(0,200,255,.2);cursor:pointer;background:transparent;color:var(--dim2);transition:all .15s;line-height:1.2;}
-.hlang-btn.on{background:rgba(0,200,255,.18);border-color:var(--cyan);color:var(--cyan);}
-.hlang-btn:hover:not(.on){background:rgba(255,255,255,.1);color:#fff;}
+.header-lang{display:flex;gap:5px;margin-top:2px;}
+.hlang-btn{padding:2px 3px;border-radius:4px;border:1.5px solid rgba(0,200,255,.2);cursor:pointer;background:transparent;transition:all .15s;line-height:0;display:flex;align-items:center;justify-content:center;}
+.hlang-btn img{width:24px;height:16px;object-fit:cover;border-radius:2px;display:block;}
+.hlang-btn.on{border-color:var(--cyan);background:rgba(0,200,255,.18);box-shadow:0 0 5px rgba(0,200,255,.25);}
+.hlang-btn:hover:not(.on){background:rgba(255,255,255,.1);}
+/* user bar (mobile only) */
+#user-bar{display:none;}
 /* user chip */
 .user-chip{display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:4px;}
 .user-name{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;color:var(--dim2);}
@@ -1031,6 +1034,8 @@ header{
   .nations-grid{grid-template-columns:repeat(3,1fr);column-gap:0;gap:32px;justify-items:center;}
   .clock-zones,.clock-gmt{display:none;}
   .header-right{right:16px;top:50%;transform:translateY(-50%);gap:3px;}
+  .header-right .user-chip{display:none;}
+  #user-bar{display:flex;justify-content:flex-end;align-items:center;padding:5px 16px 4px;background:rgba(0,0,9,.97);border-bottom:1px solid rgba(0,200,255,.08);}
 }
 
 /* Mobile: ≤480px — all critical fixes */
@@ -1042,7 +1047,8 @@ header{
   .header-right{right:12px;}
   .clock-time{font-size:14px;letter-spacing:1px;}
   .header-lang{margin-top:0;}
-  .hlang-btn{font-size:10px;padding:2px 5px;}
+  .hlang-btn img{width:20px;height:13px;}
+  #user-bar{padding:4px 12px 3px;}
   .user-chip{gap:5px;margin-top:0;}
   .user-name{font-size:11px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .uavatar{width:24px;height:24px;font-size:13px;}
@@ -1202,8 +1208,8 @@ header{
     </div>
     <div class="clock-gmt" id="clock-gmt">GMT+3</div>
     <div class="header-lang">
-      <button class="hlang-btn" id="hlang-tr" onclick="setUiLang('tr')">🇹🇷 TR</button>
-      <button class="hlang-btn" id="hlang-en" onclick="setUiLang('en')">🇬🇧 EN</button>
+      <button class="hlang-btn" id="hlang-tr" onclick="setUiLang('tr')" title="Türkçe"><img src="https://flagcdn.com/w40/tr.png" alt="TR"></button>
+      <button class="hlang-btn" id="hlang-en" onclick="setUiLang('en')" title="English"><img src="https://flagcdn.com/w40/gb.png" alt="EN"></button>
     </div>
     <div class="user-chip" id="user-chip">
       <div class="uavatar" id="user-avatar">👤</div>
@@ -1211,6 +1217,14 @@ header{
     </div>
   </div>
 </header>
+
+<!-- USER BAR: mobile only, shows profile chip below header -->
+<div id="user-bar">
+  <div class="user-chip" id="user-chip-m">
+    <div class="uavatar" id="user-avatar-m">👤</div>
+    <div class="user-name" id="user-name-m">Giriş Yap</div>
+  </div>
+</div>
 
 <!-- GLOBE (no CSS sun overlay — light comes from WebGL shader) -->
 <div id="globe-wrap">
