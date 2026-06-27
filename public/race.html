@@ -519,7 +519,7 @@ function render(){
 
   // Check if I'm already in the race
   if(!joined){
-    const me = S.players.find(p=>p.deviceId===deviceId);
+    const me = S.players.find(p=>p.name===myName);
     if(me) joined = true;
   }
 
@@ -623,17 +623,17 @@ function renderLobby(){
   list.innerHTML='';
   S.players.forEach(p=>{
     const row=document.createElement('div');
-    row.className='player-row'+(p.deviceId===deviceId?' me':'');
+    row.className='player-row'+(p.name===myName?' me':'');
     const flagWrap=document.createElement('div'); flagWrap.className='pflag';
     flagWrap.appendChild(flagImgEl(p.flag,36));
     const name=document.createElement('div'); name.className='pname';
-    name.textContent=(p.deviceId===deviceId?'⭐ ':'')+p.name;
+    name.textContent=(p.name===myName?'⭐ ':'')+p.name;
     row.appendChild(flagWrap); row.appendChild(name);
     list.appendChild(row);
   });
 
   // Kurucu erken başlatma butonu — sadece bireysel modda
-  const isCreator = joined && S.creator === deviceId && S.mode === 'individual';
+  const isCreator = joined && S.creatorName === myName && S.mode === 'individual';
   $('forceStartWrap').style.display = isCreator ? '' : 'none';
   if(isCreator){
     const enough = S.players.length >= 2;
@@ -671,16 +671,16 @@ function renderRacers(){
   const sorted=[...S.players].sort((a,b)=>(b.clicks||0)-(a.clicks||0));
   const target=Number(S.winValue);
   sorted.forEach((p,rank)=>{
-    const isMe=p.deviceId===deviceId;
+    const isMe=p.name===myName;
     const pct=S.winType==='clicks'?Math.min(100,(p.clicks||0)/target*100):0;
-    let card=grid.querySelector(`[data-pid="${p.deviceId}"]`);
+    let card=grid.querySelector(`[data-pid="${p.name}"]`);
     if(!card){
       card=document.createElement('div');
       card.className='racer-card';
-      card.dataset.pid=p.deviceId;
+      card.dataset.pid=p.name;
       grid.appendChild(card);
     }
-    const isWinner=S.status==='finished'&&S.winner===p.deviceId;
+    const isWinner=S.status==='finished'&&S.winner===p.name;
     card.className='racer-card'+(isWinner?' winner':'')+(isMe?' me':'');
     card.innerHTML=`
       <div class="racer-rank ${rank<3?'r'+(rank+1):''}">#${rank+1}</div>
@@ -691,7 +691,7 @@ function renderRacers(){
     `;
   });
   // Remove cards for players who left (shouldn't happen but safety)
-  Array.from(grid.children).forEach(c=>{ if(!sorted.find(p=>p.deviceId===c.dataset.pid)) c.remove(); });
+  Array.from(grid.children).forEach(c=>{ if(!sorted.find(p=>p.name===c.dataset.pid)) c.remove(); });
 }
 
 function updateCountdown(){
@@ -722,8 +722,8 @@ function winLabel(r){ return r.winType==='clicks'?`İlk ${fmt(r.winValue)} tık`
 function fmtMs(ms){ const s=Math.ceil(ms/1000); return s<60?s+'sn':`${Math.floor(s/60)}dk ${String(s%60).padStart(2,'0')}sn`; }
 
 function showResultScreen(){
-  const me = S.players.find(p=>p.deviceId===deviceId);
-  const isWinner = S.mode==='individual' ? S.winner===deviceId : (me && me.teamId===S.winner);
+  const me = S.players.find(p=>p.name===myName);
+  const isWinner = S.mode==='individual' ? S.winner===myName : (me && me.teamId===S.winner);
 
   // Başlık
   $('resTrophy').textContent = isWinner ? '🏆' : '🎯';
@@ -765,7 +765,7 @@ function showResultScreen(){
         sub.className = 'res-team-players';
         sub.innerHTML = teamPlayers.map(p=>{
           const pFlag = window.getFlagSrc ? window.getFlagSrc(p.flag) : '';
-          return `<div class="res-team-player">${pFlag?`<img src="${pFlag}" alt="">`:''}${p.name}${p.deviceId===deviceId?' (sen)':''} — ${fmt(p.clicks)} tık</div>`;
+          return `<div class="res-team-player">${pFlag?`<img src="${pFlag}" alt="">`:''}${p.name}${p.name===myName?' (sen)':''} — ${fmt(p.clicks)} tık</div>`;
         }).join('');
         rows.appendChild(sub);
       }
@@ -773,8 +773,8 @@ function showResultScreen(){
   } else {
     const sorted = [...S.players].sort((a,b)=>b.clicks-a.clicks);
     sorted.forEach((p,i)=>{
-      const isP = p.deviceId === S.winner;
-      const isMe = p.deviceId === deviceId;
+      const isP = p.name === S.winner;
+      const isMe = p.name === myName;
       const flagSrc = window.getFlagSrc ? window.getFlagSrc(p.flag) : '';
       const row = document.createElement('div');
       row.className = 'res-row' + (isP?' winner-row':'') + (isMe?' me-row':'');
@@ -794,7 +794,7 @@ function showResultScreen(){
 // ---- Optimistic click count ----
 let _localAdded = 0;
 function localClicks(){
-  const me = S && S.players.find(p=>p.deviceId===deviceId);
+  const me = S && S.players.find(p=>p.name===myName);
   return (me?me.clicks:0) + _localAdded;
 }
 

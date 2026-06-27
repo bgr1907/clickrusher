@@ -10,7 +10,7 @@ if (process.env.NODE_ENV !== 'test') {
 const path     = require('path');
 const fs       = require('fs');
 const Fastify  = require('fastify');
-const { applyLimits }    = require('./lib/ratelimit');
+const { applyLimits, authLimit } = require('./lib/ratelimit');
 const counters           = require('./lib/counters');
 const { registerUser, loginUser } = require('./lib/auth');
 const { containsBadWord }         = require('./lib/badwords');
@@ -111,21 +111,22 @@ app.get('/api/state', async (req) => {
 
 // Task 3: Kayıt
 app.post('/api/register', {
-  schema: { body: { type: 'object', required: ['device','name','password'],
-    properties: { device:{type:'string'}, name:{type:'string'}, password:{type:'string'} } } },
+  schema: { body: { type: 'object', required: ['device','name','password','email'],
+    properties: { device:{type:'string'}, name:{type:'string'}, password:{type:'string'}, email:{type:'string'}, country:{type:'string'} } } },
   attachValidation: true,
 }, async (req) => {
   if (req.validationError) return { ok: false, reason: 'invalid' };
-  const { device, name, password } = req.body;
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ?? req.ip ?? '0.0.0.0';
+  if (!authLimit(ip, 'register')) return { ok: false, reason: 'rate_limited' };
+  const { device, name, password, email, country } = req.body;
   if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
   if (!PWD_RE.test(String(password ?? '')))  return { ok: false, reason: 'invalid_password' };
   const clean = sanitizeName(name);
   if (!clean) {
-    // Format mı bad word mü ayırt et
     const stripped = String(name).replace(/[<>"'&]/g, '');
     return { ok: false, reason: containsBadWord(stripped) ? 'badword' : 'invalid' };
   }
-  return registerUser(device, clean, password);
+  return registerUser(device, clean, password, email ? String(email).trim() : '', country ? String(country).trim() : '');
 });
 
 // Task 3: Giriş
@@ -135,6 +136,8 @@ app.post('/api/login', {
   attachValidation: true,
 }, async (req) => {
   if (req.validationError) return { ok: false, reason: 'invalid' };
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ?? req.ip ?? '0.0.0.0';
+  if (!authLimit(ip, 'login')) return { ok: false, reason: 'rate_limited' };
   const { device, name, password } = req.body;
   if (!DEVICE_RE.test(String(device ?? ''))) return { ok: false, reason: 'invalid' };
   return loginUser(device, String(name ?? ''), String(password ?? ''));

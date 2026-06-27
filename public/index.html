@@ -104,14 +104,24 @@ header{
   text-shadow:0 0 30px rgba(0,200,255,.8),0 0 60px rgba(0,200,255,.35),0 2px 0 rgba(0,0,0,.6);
 }
 .logo-sub{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:12px;color:var(--cyan);margin-top:1px;}
-/* right side: clock + user chip */
-.header-right{position:absolute;right:24px;display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+/* right side: user-chip (left) + clock-col (right) */
+.header-right{position:absolute;right:24px;top:50%;transform:translateY(-50%);display:flex;flex-direction:row;align-items:center;gap:14px;}
+.header-right .user-chip{margin-top:0;}
+.clock-col{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
 .clock-time{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:2px;color:#fff;line-height:1;}
 .clock-zones{display:flex;gap:4px;margin-top:2px;}
 .tz-btn{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:800;letter-spacing:1px;padding:2px 5px;border-radius:3px;border:none;cursor:pointer;background:rgba(255,255,255,.08);color:var(--dim2);transition:all .15s;}
 .tz-btn.active{background:#FF8C00;color:#fff;}
 .tz-btn:hover:not(.active){background:rgba(255,255,255,.15);color:#fff;}
 .clock-gmt{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--dim);text-align:right;}
+/* header lang toggle */
+.header-lang{display:flex;gap:5px;margin-top:2px;}
+.hlang-btn{padding:2px 3px;border-radius:4px;border:1.5px solid rgba(0,200,255,.2);cursor:pointer;background:transparent;transition:all .15s;line-height:0;display:flex;align-items:center;justify-content:center;}
+.hlang-btn img{width:24px;height:16px;object-fit:cover;border-radius:2px;display:block;}
+.hlang-btn.on{border-color:var(--cyan);background:rgba(0,200,255,.18);box-shadow:0 0 5px rgba(0,200,255,.25);}
+.hlang-btn:hover:not(.on){background:rgba(255,255,255,.1);}
+/* user bar (mobile only) */
+#user-bar{display:none;}
 /* user chip */
 .user-chip{display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:4px;}
 .user-name{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;color:var(--dim2);}
@@ -745,10 +755,6 @@ header{
 .settings-row-label{font-family:'Barlow',sans-serif;font-size:13px;color:rgba(255,255,255,.75);}
 .settings-row-sub{font-family:'Barlow',sans-serif;font-size:11px;color:rgba(255,255,255,.3);margin-top:2px;}
 .settings-btn-row{display:flex;gap:6px;}
-.settings-lang-btn{padding:7px 16px;border:1.5px solid rgba(0,200,255,.25);border-radius:6px;
-  background:transparent;color:rgba(255,255,255,.45);font-family:'Barlow Condensed',sans-serif;
-  font-size:13px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .18s;}
-.settings-lang-btn.on{background:rgba(0,200,255,.18);border-color:var(--cyan);color:var(--cyan);}
 .settings-notif-btn{padding:8px 18px;border:1.5px solid rgba(0,255,136,.3);border-radius:6px;
   background:rgba(0,255,136,.06);color:#00FF88;font-family:'Barlow Condensed',sans-serif;
   font-size:12px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .18s;}
@@ -1017,6 +1023,100 @@ header{
 .wiz-btn{width:100%;padding:12px;border-radius:10px;background:linear-gradient(135deg,#006699,#00C8FF);color:#fff;font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;box-shadow:0 4px 20px rgba(0,200,255,.3);}
 .wiz-btn-sec{width:100%;padding:10px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--bord);color:var(--chalk-dim);font-size:14px;font-weight:700;letter-spacing:.06em;}
 .wiz-back-btn{font-size:13px;font-weight:700;color:var(--chalk-dim);padding:4px 8px;letter-spacing:.06em}
+
+/* ── MOBILE RESPONSIVE ──────────────────────────────────────── */
+
+/* Tablet: ≤768px — reduce logo, top-3, nations gap */
+@media(max-width:768px){
+  .logo-text{font-size:44px;letter-spacing:4px;}
+  .top3-grid{gap:48px;}
+  .flag-circ{width:160px;height:160px;}
+  .medal.g{transform:translateY(14px);}
+  .medal.s,.medal.b{transform:translateY(64px);}
+  .nations-grid{grid-template-columns:repeat(3,1fr);column-gap:0;gap:32px;justify-items:center;}
+  .clock-zones,.clock-gmt{display:none;}
+  .header-right{right:16px;gap:3px;}
+  .header-right .user-chip{display:none;}
+  #user-bar{display:flex;justify-content:flex-end;align-items:center;padding:5px 16px 4px;background:rgba(0,0,9,.97);border-bottom:1px solid rgba(0,200,255,.08);}
+}
+
+/* Mobile: ≤480px — all critical fixes */
+@media(max-width:480px){
+  /* Header */
+  header{padding:10px 14px;}
+  .logo-text{font-size:28px;letter-spacing:2px;}
+  .logo-sub{font-size:10px;letter-spacing:5px;}
+  .header-right{right:12px;}
+  .clock-time{font-size:14px;letter-spacing:1px;}
+  .header-lang{margin-top:0;}
+  .hlang-btn img{width:20px;height:13px;}
+  #user-bar{padding:4px 12px 3px;}
+  .user-chip{gap:5px;margin-top:0;}
+  .user-name{font-size:11px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .uavatar{width:24px;height:24px;font-size:13px;}
+
+  /* Tabs: horizontal scroll so long names don't wrap */
+  .tabs{justify-content:flex-start;overflow-x:auto;padding:0 6px;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{font-size:14px;padding:10px 14px;letter-spacing:1px;
+    flex-shrink:0;white-space:nowrap;}
+
+  /* Stats bar */
+  .stats{padding:8px 6px;gap:3px;}
+  .stat{padding:8px 6px;}
+  .stat-val{font-size:17px;}
+  .stat-val.cyan{font-size:14px;gap:4px;}
+  .rank-chip{width:22px;height:22px;font-size:9px;}
+  .stat-lbl{font-size:8px;letter-spacing:1.5px;}
+
+  /* Top-3 medals */
+  .top3-grid{gap:12px;}
+  .flag-circ{width:90px;height:90px;}
+  .medal.g{transform:translateY(8px);}
+  .medal.s,.medal.b{transform:translateY(37px);}
+  .medal-name{font-size:12px;}
+  .medal-pts{font-size:11px;}
+  .top3-title{font-size:22px;letter-spacing:6px;}
+  .top3-title-wrap{padding:6px 16px;}
+
+  /* Nations grid: 2 columns */
+  .nations-section{margin-top:32px;}
+  .nations-grid{grid-template-columns:repeat(2,1fr);column-gap:0;gap:20px;justify-items:center;}
+  .nf-circ{width:100px;height:100px;}
+  .nf-pts-wrap{width:100px;}
+  .nf-name{font-size:13px;max-width:110px;}
+  .nations-title{font-size:15px;letter-spacing:2px;}
+
+  /* Auth modal + quiz country grid */
+  .auth-box{padding:20px 14px 18px;}
+  .auth-country-grid{grid-template-columns:repeat(4,1fr);max-height:160px;}
+  #panel-quiz #cgrid{grid-template-columns:repeat(4,1fr);}
+
+  /* Flag picker */
+  .fp-box{padding:16px;}
+  .fp-grid{grid-template-columns:repeat(4,1fr);}
+
+  /* GK battle */
+  .gk-charge-wrap{width:80px;height:80px;}
+
+  /* Wizard */
+  .wiz-body{padding:14px 12px;}
+}
+
+/* Small phones: ≤360px */
+@media(max-width:360px){
+  .logo-text{font-size:22px;letter-spacing:1px;}
+  .logo-sub{font-size:9px;letter-spacing:3px;}
+  .user-name{max-width:56px;}
+  .hlang-btn{font-size:9px;padding:2px 4px;}
+  .tab{font-size:12px;padding:9px 11px;}
+  .nations-grid{gap:14px;}
+  .nf-circ{width:80px;height:80px;}
+  .nf-pts-wrap{width:80px;}
+  .auth-country-grid{grid-template-columns:repeat(3,1fr);}
+  .fp-grid{grid-template-columns:repeat(3,1fr);}
+}
 </style>
 </head>
 <body>
@@ -1026,7 +1126,7 @@ header{
 <!-- LOADING -->
 <div id="loading">
   <div class="load-globe">🌍</div>
-  <div class="load-text" id="load-text">BAYRAKLAR YÜKLENİYOR</div>
+  <div class="load-text" id="load-text" data-i18n="load-text">BAYRAKLAR YÜKLENİYOR</div>
   <div class="load-bar"><div class="load-fill" id="load-fill"></div></div>
 </div>
 
@@ -1043,47 +1143,47 @@ header{
     <a class="sb-card" href="#" onclick="openProfile();closeSidebar();return false;">
       <div class="sb-card-icon purple">👤</div>
       <div>
-        <div class="sb-card-title">Profilim</div>
-        <div class="sb-card-sub">İstatistikler ve yarış geçmişi</div>
+        <div class="sb-card-title" data-i18n="sb-profile">Profilim</div>
+        <div class="sb-card-sub" data-i18n="sb-profile-sub">İstatistikler ve yarış geçmişi</div>
       </div>
     </a>
     <a class="sb-card" href="#">
       <div class="sb-card-icon" style="background:rgba(255,140,0,.1)">🏆</div>
       <div>
-        <div class="sb-card-title">Turnuva</div>
-        <div class="sb-card-sub">2026 Dünya Kupası özel etkinliği</div>
+        <div class="sb-card-title" data-i18n="sb-tournament">Turnuva</div>
+        <div class="sb-card-sub" data-i18n="sb-tournament-sub">2026 Dünya Kupası özel etkinliği</div>
       </div>
     </a>
     <a class="sb-card" href="#" onclick="openLeaderboard();closeSidebar();return false;">
       <div class="sb-card-icon" style="background:rgba(0,255,136,.08)">📊</div>
       <div>
-        <div class="sb-card-title">Liderlik Tablosu</div>
-        <div class="sb-card-sub">Global sıralamalar</div>
+        <div class="sb-card-title" data-i18n="sb-leaderboard">Liderlik Tablosu</div>
+        <div class="sb-card-sub" data-i18n="sb-leaderboard-sub">Global sıralamalar</div>
       </div>
     </a>
     <a class="sb-card" href="#" onclick="document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('open');document.body.style.overflow='';document.getElementById('sb-toggle').classList.remove('active');document.querySelector('.tab[data-tab=quiz]').click();return false;">
       <div class="sb-card-icon" style="background:rgba(168,85,247,.12)">❓</div>
       <div>
         <div class="sb-card-title">Quiz</div>
-        <div class="sb-card-sub">Bilgi yarışması modunu aç</div>
+        <div class="sb-card-sub" data-i18n="sb-quiz-sub">Bilgi yarışması modunu aç</div>
       </div>
     </a>
-    <div class="sb-section">Turnuva</div>
+    <div class="sb-section" data-i18n="sb-sec-tournament">Turnuva</div>
     <a class="sb-card" href="#" onclick="openBracket();closeSidebar();return false;">
       <div class="sb-card-icon" style="background:rgba(255,215,0,.08)">🏆</div>
       <div>
-        <div class="sb-card-title">Fikstür & Gruplar</div>
-        <div class="sb-card-sub">Dünya Kupası 2026 tablosu</div>
+        <div class="sb-card-title" data-i18n="sb-bracket">Fikstür & Gruplar</div>
+        <div class="sb-card-sub" data-i18n="sb-bracket-sub">Dünya Kupası 2026 tablosu</div>
       </div>
     </a>
-    <div class="sb-section">Açık Yarışlar</div>
-    <div class="sb-empty">Şu an açık yarış yok</div>
-    <div class="sb-section">Ayarlar</div>
+    <div class="sb-section" data-i18n="sb-sec-races">Açık Yarışlar</div>
+    <div class="sb-empty" data-i18n="sb-no-races">Şu an açık yarış yok</div>
+    <div class="sb-section" data-i18n="sb-sec-settings">Ayarlar</div>
     <a class="sb-card" href="#" onclick="openSettings();closeSidebar();return false;">
       <div class="sb-card-icon" style="background:rgba(255,255,255,.04)">⚙️</div>
       <div>
-        <div class="sb-card-title">Hesap Ayarları</div>
-        <div class="sb-card-sub">Bildirimler, gizlilik, dil</div>
+        <div class="sb-card-title" data-i18n="sb-settings">Hesap Ayarları</div>
+        <div class="sb-card-sub" data-i18n="sb-settings-sub">Bildirimler, gizlilik, dil</div>
       </div>
     </a>
   </div>
@@ -1102,19 +1202,33 @@ header{
     <div class="logo-sub">TOURNAMENT 2026</div>
   </a>
   <div class="header-right">
-    <div class="clock-time" id="clock-time">00:00:00</div>
-    <div class="clock-zones">
-      <button class="tz-btn active" data-offset="3">TR</button>
-      <button class="tz-btn" data-offset="-4">ET</button>
-      <button class="tz-btn" data-offset="-7">PT</button>
-    </div>
-    <div class="clock-gmt" id="clock-gmt">GMT+3</div>
     <div class="user-chip" id="user-chip">
       <div class="uavatar" id="user-avatar">👤</div>
       <div class="user-name" id="user-name">Giriş Yap</div>
     </div>
+    <div class="clock-col">
+      <div class="clock-time" id="clock-time">00:00:00</div>
+      <div class="clock-zones">
+        <button class="tz-btn active" data-offset="3">TR</button>
+        <button class="tz-btn" data-offset="-4">ET</button>
+        <button class="tz-btn" data-offset="-7">PT</button>
+      </div>
+      <div class="clock-gmt" id="clock-gmt">GMT+3</div>
+      <div class="header-lang">
+        <button class="hlang-btn" id="hlang-tr" onclick="setUiLang('tr')" title="Türkçe"><img src="https://flagcdn.com/w40/tr.png" alt="TR"></button>
+        <button class="hlang-btn" id="hlang-en" onclick="setUiLang('en')" title="English"><img src="https://flagcdn.com/w40/gb.png" alt="EN"></button>
+      </div>
+    </div>
   </div>
 </header>
+
+<!-- USER BAR: mobile only, shows profile chip below header -->
+<div id="user-bar">
+  <div class="user-chip" id="user-chip-m">
+    <div class="uavatar" id="user-avatar-m">👤</div>
+    <div class="user-name" id="user-name-m">Giriş Yap</div>
+  </div>
+</div>
 
 <!-- GLOBE (no CSS sun overlay — light comes from WebGL shader) -->
 <div id="globe-wrap">
@@ -1123,8 +1237,8 @@ header{
 
 <!-- TABS (only here, not in header) -->
 <div class="tabs">
-  <button class="tab active" data-tab="bayrak">BAYRAK YARI<span class="tab-s">Ş</span>I</button>
-  <button class="tab" data-tab="gun">GÜNÜN KAPI<span class="tab-s">Ş</span>MASI</button>
+  <button class="tab active" data-tab="bayrak" data-i18n-html="tab-bayrak">BAYRAK YARI<span class="tab-s">Ş</span>I</button>
+  <button class="tab" data-tab="gun" data-i18n-html="tab-gun">GÜNÜN KAPI<span class="tab-s">Ş</span>MASI</button>
   <button class="tab rush" data-tab="rush">RUSH</button>
   <button class="tab quiz" data-tab="quiz">QUIZ</button>
 </div>
@@ -1132,11 +1246,11 @@ header{
 <div id="panel-main">
 <div class="stats">
   <div class="stat">
-    <div class="stat-lbl">Toplam Puan</div>
+    <div class="stat-lbl" data-i18n="stat-total-lbl">Toplam Puan</div>
     <div class="stat-val orange" id="stat-total">0</div>
   </div>
   <div class="stat lead">
-    <div class="stat-lbl">Turnuva Lideri</div>
+    <div class="stat-lbl" data-i18n="stat-leader-lbl">Turnuva Lideri</div>
     <div class="stat-val cyan" id="stat-leader">
       <div class="rank-chip">#1</div>—
     </div>
@@ -1154,7 +1268,7 @@ header{
     <div class="nations-section">
       <div class="nations-title-wrap">
         <div class="nations-title-line"></div>
-        <div class="nations-title">TÜM TAKIMLAR</div>
+        <div class="nations-title" data-i18n="nations-title">TÜM TAKIMLAR</div>
         <div class="nations-title-line right"></div>
       </div>
       <div class="nations-grid" id="nations-grid"></div>
@@ -1169,7 +1283,7 @@ header{
   <!-- Upcoming matches bar (3 matches) -->
   <div class="gk-match-bar">
     <div class="gk-match-bar-inner" id="gk-match-bar-inner">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:3px;color:var(--dim);padding:4px 6px;white-space:nowrap;align-self:center;">SIRADAKİ MAÇLAR</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:3px;color:var(--dim);padding:4px 6px;white-space:nowrap;align-self:center;" data-i18n="gk-upcoming">SIRADAKİ MAÇLAR</div>
     </div>
   </div>
 
@@ -1189,7 +1303,7 @@ header{
         <div class="gk-team-count-badge" id="cb-home-cnt">0</div>
         <div class="gk-team-name-lbl" id="cb-home-name">—</div>
         <button class="gk-rush-btn" id="cb-home-btn" onclick="cbClick('home',event)" disabled>⚡ RUSH</button>
-        <div class="gk-lock-msg" id="cb-home-lock">Maç başlamadan katılamazsın</div>
+        <div class="gk-lock-msg" id="cb-home-lock" data-i18n="lock-msg">Maç başlamadan katılamazsın</div>
       </div>
 
       <!-- VS center -->
@@ -1211,7 +1325,7 @@ header{
         <div class="gk-team-count-badge" id="cb-away-cnt">0</div>
         <div class="gk-team-name-lbl" id="cb-away-name">—</div>
         <button class="gk-rush-btn away-style" id="cb-away-btn" onclick="cbClick('away',event)" disabled>🔥 RUSH</button>
-        <div class="gk-lock-msg" id="cb-away-lock">Maç başlamadan katılamazsın</div>
+        <div class="gk-lock-msg" id="cb-away-lock" data-i18n="lock-msg">Maç başlamadan katılamazsın</div>
       </div>
     </div>
 
@@ -1231,7 +1345,7 @@ header{
 
     <!-- Score prediction -->
     <div class="gk-pred-box">
-      <div class="gk-pred-title">⚽ SKOR TAHMİNİ</div>
+      <div class="gk-pred-title" data-i18n="pred-title">⚽ SKOR TAHMİNİ</div>
       <div class="pred-teams-row">
         <span id="pred-home-name">EV SAHİBİ</span>
         <span>vs</span>
@@ -1242,17 +1356,17 @@ header{
         <span class="pred-sep">:</span>
         <input type="number" class="pred-score-inp" id="pred-away-score" min="0" max="20" value="0">
       </div>
-      <button class="pred-submit-btn" id="pred-submit-btn" onclick="submitPrediction()">TAHMİNİ GÖNDER</button>
-      <div class="pred-locked-msg" id="pred-locked-msg">✓ TAHMİNİNİZ KAYDEDİLDİ</div>
+      <button class="pred-submit-btn" id="pred-submit-btn" onclick="submitPrediction()" data-i18n="pred-submit">TAHMİNİ GÖNDER</button>
+      <div class="pred-locked-msg" id="pred-locked-msg" data-i18n="pred-locked">✓ TAHMİNİNİZ KAYDEDİLDİ</div>
       <div id="pred-stats"></div>
     </div>
 
     <!-- Chat panel -->
     <div class="gk-chat-panel">
-      <div class="gk-chat-hdr"><div class="chat-dot"></div>CANLI SOHBET</div>
+      <div class="gk-chat-hdr"><div class="chat-dot"></div><span data-i18n="chat-title">CANLI SOHBET</span></div>
       <div id="chat-msgs" style="flex:1;overflow-y:auto;"></div>
       <div id="chat-input-wrap">
-        <div class="chat-login-hint">Sohbet için <span onclick="openAuthModal()">giriş yap</span></div>
+        <div class="chat-login-hint" data-i18n-html="chat-login">Sohbet için <span onclick="openAuthModal()">giriş yap</span></div>
       </div>
     </div>
 
@@ -1263,24 +1377,24 @@ header{
   <!-- Lobby -->
   <div class="rush-lobby" id="rush-lobby">
     <div class="rush-title">⚽ RUSH</div>
-    <div class="rush-sub">Top ekrana çıktığında tıkla! 30 saniyede en fazla puanı topla.</div>
+    <div class="rush-sub" data-i18n="rush-sub">Top ekrana çıktığında tıkla! 30 saniyede en fazla puanı topla.</div>
     <div class="rush-best" id="rush-best-lbl"></div>
-    <button class="rush-start-btn" onclick="rushStart()">BAŞLAT</button>
+    <button class="rush-start-btn" onclick="rushStart()" data-i18n="rush-start">BAŞLAT</button>
   </div>
   <!-- Arena -->
   <div class="rush-arena" id="rush-arena">
     <div class="rush-hud">
       <div class="rush-hud-item">
         <div class="rush-hud-val" id="rush-timer">30</div>
-        <div class="rush-hud-lbl">SÜRE</div>
+        <div class="rush-hud-lbl" data-i18n="rush-time-lbl">SÜRE</div>
       </div>
       <div class="rush-hud-item">
         <div class="rush-hud-val" id="rush-score-hud">0</div>
-        <div class="rush-hud-lbl">PUAN</div>
+        <div class="rush-hud-lbl" data-i18n="rush-score-lbl">PUAN</div>
       </div>
       <div class="rush-hud-item">
         <div class="rush-hud-val" id="rush-combo-hud">x1</div>
-        <div class="rush-hud-lbl">KOMBO</div>
+        <div class="rush-hud-lbl" data-i18n="rush-combo-lbl">KOMBO</div>
       </div>
     </div>
     <div class="rush-field" id="rush-field"></div>
@@ -1305,8 +1419,8 @@ header{
     <div id="qsel-guest-login" style="display:none;width:100%;max-width:360px;margin-bottom:14px">
       <div style="background:#fff;border-radius:16px;padding:18px 20px;color:#222;box-shadow:0 6px 30px rgba(0,0,0,.25)">
         <p style="font-size:.88rem;color:#555;margin-bottom:12px;text-align:center">Puan kazanmak için giriş yap veya kayıt ol</p>
-        <input type="text" class="tin" id="q-li-nick" maxlength="15" placeholder="Kullanıcı adı" style="margin-top:0">
-        <input type="password" class="tin" id="q-li-pw" placeholder="Şifre" style="margin-top:8px">
+        <input type="text" class="tin" id="q-li-nick" maxlength="100" placeholder="E-posta veya kullanıcı adı" style="margin-top:0" autocomplete="username">
+        <input type="password" class="tin" id="q-li-pw" placeholder="Şifre" style="margin-top:8px" autocomplete="current-password">
         <button class="qbtn qbtn-primary" style="margin-top:10px" onclick="qLoginInline()">Giriş Yap</button>
         <p id="q-li-err" style="color:#e53935;font-size:.8rem;text-align:center;margin-top:6px;display:none"></p>
         <div style="text-align:center;margin-top:10px">
@@ -1447,21 +1561,22 @@ header{
 <!-- ── PROFILE OVERLAY ── -->
 <div id="profile-overlay">
   <div class="prof-topbar">
-    <button class="lb-back-btn" onclick="closeProfile()">← Geri</button>
-    <div class="lb-title">PROFİLİM</div>
+    <button class="lb-back-btn" onclick="closeProfile()" data-i18n="prof-back">← Geri</button>
+    <div class="lb-title" data-i18n="prof-title">PROFİLİM</div>
   </div>
   <div class="prof-content">
     <div class="prof-avatar-row">
       <div class="prof-avatar-circle" id="prof-av">👤</div>
       <div class="prof-info">
         <div class="prof-name" id="prof-dispname">—</div>
+        <div class="prof-email" id="prof-dispemail" style="display:none"></div>
         <div class="prof-email" id="prof-total">Toplam: 0 puan</div>
       </div>
     </div>
     <div class="prof-section">
-      <div class="prof-sec-label">Hesap</div>
+      <div class="prof-sec-label" data-i18n="prof-sec-account">Hesap</div>
       <div class="prof-row">
-        <button class="del-btn" style="margin-top:4px" onclick="doLogout()">Çıkış Yap</button>
+        <button class="del-btn" style="margin-top:4px" onclick="doLogout()" data-i18n="prof-logout">Çıkış Yap</button>
       </div>
     </div>
   </div>
@@ -1471,36 +1586,22 @@ header{
 <div id="settings-modal" class="hidden">
   <div class="settings-box">
     <button class="auth-close" onclick="closeSettings()">✕</button>
-    <div class="settings-title">⚙️ HESAP AYARLARI</div>
+    <div class="settings-title" data-i18n="settings-title">⚙️ HESAP AYARLARI</div>
 
     <div class="settings-section">
-      <div class="settings-sec-label">Dil / Language</div>
+      <div class="settings-sec-label" data-i18n="settings-notif-sec">Bildirimler</div>
       <div class="settings-row">
         <div>
-          <div class="settings-row-label">Arayüz Dili</div>
-          <div class="settings-row-sub">Site geneli görüntüleme dili</div>
-        </div>
-        <div class="settings-btn-row">
-          <button class="settings-lang-btn" id="slang-tr" onclick="setUiLang('tr')">🇹🇷 TR</button>
-          <button class="settings-lang-btn" id="slang-en" onclick="setUiLang('en')">🇬🇧 EN</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="settings-section">
-      <div class="settings-sec-label">Bildirimler</div>
-      <div class="settings-row">
-        <div>
-          <div class="settings-row-label">Push Bildirimleri</div>
+          <div class="settings-row-label" data-i18n="settings-notif-lbl">Push Bildirimleri</div>
           <div class="settings-row-sub" id="notif-status">Durum kontrol ediliyor…</div>
         </div>
-        <button class="settings-notif-btn" id="notif-btn" onclick="requestNotifPerms()">İzin Ver</button>
+        <button class="settings-notif-btn" id="notif-btn" onclick="requestNotifPerms()" data-i18n="settings-notif-btn">İzin Ver</button>
       </div>
     </div>
 
     <div class="settings-section">
-      <div class="settings-sec-label">Gizlilik</div>
-      <div class="settings-privacy">
+      <div class="settings-sec-label" data-i18n="settings-priv-sec">Gizlilik</div>
+      <div class="settings-privacy" data-i18n-html="settings-privacy">
         ClickRusher oyun skorlarını ve sıralamalarını sunmak amacıyla kullanıcı adı,
         seçilen ülke ve puan verilerini saklar. E-posta adresiniz yalnızca hesap doğrulama
         ve şifre sıfırlama için kullanılır; üçüncü taraflarla paylaşılmaz.<br><br>
@@ -1513,24 +1614,24 @@ header{
 <!-- ── LEADERBOARD OVERLAY ── -->
 <div id="lb-overlay">
   <div class="lb-topbar">
-    <button class="lb-back-btn" onclick="closeLeaderboard()">← Geri</button>
-    <div class="lb-title">LİDERLİK TABLOSU</div>
+    <button class="lb-back-btn" onclick="closeLeaderboard()" data-i18n="lb-back">← Geri</button>
+    <div class="lb-title" data-i18n="lb-title">LİDERLİK TABLOSU</div>
   </div>
   <div class="lb-content">
     <div class="lb-user-banner" id="lb-user-banner">
-      <div class="lb-banner-title">Desteklediğin Ülkeler &amp; Puanların</div>
+      <div class="lb-banner-title" data-i18n="lb-banner-title">Desteklediğin Ülkeler &amp; Puanların</div>
       <div class="lb-banner-flags" id="lb-banner-flags">
-        <div class="lb-banner-empty">Henüz puan kazanılmadı.</div>
+        <div class="lb-banner-empty" data-i18n="lb-banner-empty">Henüz puan kazanılmadı.</div>
       </div>
     </div>
     <div class="lb-boxes">
       <div class="lb-box">
-        <div class="lb-box-hdr">🌍 Ülke Sıralaması</div>
-        <div id="lb-country-list"><div class="lb-loading">Yükleniyor…</div></div>
+        <div class="lb-box-hdr" data-i18n="lb-country-hdr">🌍 Ülke Sıralaması</div>
+        <div id="lb-country-list"><div class="lb-loading" data-i18n="lb-loading">Yükleniyor…</div></div>
       </div>
       <div class="lb-box">
-        <div class="lb-box-hdr">🏆 Genel Sıralama</div>
-        <div id="lb-global-list"><div class="lb-loading">Yükleniyor…</div></div>
+        <div class="lb-box-hdr" data-i18n="lb-global-hdr">🏆 Genel Sıralama</div>
+        <div id="lb-global-list"><div class="lb-loading" data-i18n="lb-loading">Yükleniyor…</div></div>
       </div>
     </div>
   </div>
@@ -1539,8 +1640,8 @@ header{
 <!-- ── FLAG PICKER (pre-activity) ── -->
 <div id="flag-picker">
   <div class="fp-box">
-    <div class="fp-title">HANGİ ÜLKE İÇİN OYNUYORSUN?</div>
-    <div class="fp-sub">Seçtiğin ülke bu yarışmada kazandığın puanları alacak</div>
+    <div class="fp-title" data-i18n="fp-title">HANGİ ÜLKE İÇİN OYNUYORSUN?</div>
+    <div class="fp-sub" data-i18n="fp-sub">Seçtiğin ülke bu yarışmada kazandığın puanları alacak</div>
     <div class="fp-grid" id="fp-grid"></div>
     <div class="fp-actions">
       <button class="fp-skip" onclick="fpConfirm(null)">Varsayılanı Kullan</button>
@@ -1576,13 +1677,13 @@ header{
     <!-- GİRİŞ -->
     <div id="af-login">
       <div class="auth-fld">
-        <label class="auth-lbl">Kullanıcı Adı</label>
-        <input class="auth-inp" type="text" id="li-nick" maxlength="15" placeholder="Kullanıcı adınız">
+        <label class="auth-lbl">E-posta veya Kullanıcı Adı</label>
+        <input class="auth-inp" type="text" id="li-nick" maxlength="100" placeholder="ornek@email.com veya kullanıcı adı" autocomplete="username">
       </div>
       <div class="auth-fld">
         <label class="auth-lbl">Şifre</label>
         <div class="pw-wrap">
-          <input class="auth-inp" type="password" id="li-pw" placeholder="••••••••">
+          <input class="auth-inp" type="password" id="li-pw" placeholder="••••••••" autocomplete="current-password">
           <button class="pw-eye" type="button" onclick="togglePw('li-pw',this)" tabindex="-1">👁</button>
         </div>
       </div>
@@ -1590,32 +1691,45 @@ header{
       <div class="auth-err bad" id="li-err"></div>
     </div>
 
-    <!-- KAYIT -->
+    <!-- KAYIT - ADIM 1: E-posta + Şifre -->
     <div id="af-register" style="display:none">
-      <div class="auth-fld">
-        <label class="auth-lbl">Kullanıcı Adı</label>
-        <input class="auth-inp" type="text" id="re-nick" maxlength="15" placeholder="SuperFatih (en az 2 karakter)">
-      </div>
-      <div class="auth-fld">
-        <label class="auth-lbl">Ülken (turnuvada temsil edeceğin)</label>
-        <div class="auth-country-grid" id="auth-cgrid"></div>
-      </div>
-      <div class="auth-fld">
-        <label class="auth-lbl">Şifre <span class="caps-warn" id="caps-warn" style="display:none">⚠ CAPS LOCK açık</span></label>
-        <div class="pw-wrap">
-          <input class="auth-inp" type="password" id="re-pw" maxlength="12" placeholder="6–12 karakter">
-          <button class="pw-eye" type="button" onclick="togglePw('re-pw',this)" tabindex="-1">👁</button>
+      <div id="af-reg-step1">
+        <div class="auth-fld">
+          <label class="auth-lbl">E-posta</label>
+          <input class="auth-inp" type="email" id="re-email" maxlength="100" placeholder="ornek@email.com" autocomplete="email">
         </div>
-      </div>
-      <div class="auth-fld">
-        <label class="auth-lbl">Şifre Tekrar</label>
-        <div class="pw-wrap">
-          <input class="auth-inp" type="password" id="re-pw2" maxlength="12" placeholder="Şifrenizi tekrar girin">
-          <button class="pw-eye" type="button" onclick="togglePw('re-pw2',this)" tabindex="-1">👁</button>
+        <div class="auth-fld">
+          <label class="auth-lbl">Şifre <span class="caps-warn" id="caps-warn" style="display:none">⚠ CAPS LOCK açık</span></label>
+          <div class="pw-wrap">
+            <input class="auth-inp" type="password" id="re-pw" maxlength="12" placeholder="6–12 karakter" autocomplete="new-password">
+            <button class="pw-eye" type="button" onclick="togglePw('re-pw',this)" tabindex="-1">👁</button>
+          </div>
         </div>
+        <div class="auth-fld">
+          <label class="auth-lbl">Şifre Tekrar</label>
+          <div class="pw-wrap">
+            <input class="auth-inp" type="password" id="re-pw2" maxlength="12" placeholder="Şifrenizi tekrar girin" autocomplete="new-password">
+            <button class="pw-eye" type="button" onclick="togglePw('re-pw2',this)" tabindex="-1">👁</button>
+          </div>
+        </div>
+        <button class="auth-btn" id="re-step1-btn" onclick="authRegisterStep1()">DEVAM ET →</button>
+        <div class="auth-err" id="re-err1"></div>
       </div>
-      <button class="auth-btn" id="re-btn" onclick="authRegister()">KAYIT OL</button>
-      <div class="auth-err" id="re-err"></div>
+
+      <!-- ADIM 2: Nick + Ülke -->
+      <div id="af-reg-step2" style="display:none">
+        <button type="button" onclick="authRegisterBack()" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:.82rem;margin-bottom:10px;padding:0">← Geri</button>
+        <div class="auth-fld">
+          <label class="auth-lbl">Kullanıcı Adı (Nick)</label>
+          <input class="auth-inp" type="text" id="re-nick" maxlength="15" placeholder="SuperFatih (en az 2 karakter)" autocomplete="username">
+        </div>
+        <div class="auth-fld">
+          <label class="auth-lbl">Ülken (turnuvada temsil edeceğin)</label>
+          <div class="auth-country-grid" id="auth-cgrid"></div>
+        </div>
+        <button class="auth-btn" id="re-btn" onclick="authRegister()">KAYIT OL</button>
+        <div class="auth-err" id="re-err"></div>
+      </div>
     </div>
   </div>
 </div>
