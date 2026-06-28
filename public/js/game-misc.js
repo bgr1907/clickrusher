@@ -2,7 +2,20 @@
 
 // ── WORLD CUP DATA (for bracket) ─────────────────────────────────────────
 let wcTeams={},wcGames=[];
-function getWCFlag(id){const t=wcTeams[id];if(!t)return '';const iso=(t.iso2||'').toLowerCase();return iso?`https://flagcdn.com/w160/${iso}.png`:'';}
+
+// Some APIs return names instead of standard ISO2 codes for sub-national teams
+const _NAME_ISO_FIX={'england':'gb-eng','scotland':'gb-sct','wales':'gb-wls','northern ireland':'gb-nir'};
+
+function getTeamFlagSrc(id,size){
+  const info=wcTeams[id]||{};
+  let iso=(info.iso2||'').toLowerCase();
+  if(!iso){
+    const n=(info.name_en||'').toLowerCase();
+    iso=_NAME_ISO_FIX[n]||'';
+  }
+  return iso?`https://flagcdn.com/w${size||40}/${iso}.png`:'';
+}
+function getWCFlag(id){return getTeamFlagSrc(id,160);}
 function getWCName(id){return wcTeams[id]?.name_en||'?';}
 function wcIsDone(g){const f=g.finished;return f===true||f===1||String(f).toUpperCase()==='TRUE'||f==='1';}
 function wcIsLive(g){return !wcIsDone(g)&&g.time_elapsed&&parseInt(g.time_elapsed)>0;}
@@ -62,8 +75,8 @@ function brRenderGroups(body){
     const teams=Object.values(g.teams).sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga));
     return `<div class="br-group-card"><div class="br-group-hdr">GRUP ${g.name}</div>
       <div class="br-group-row header"><span></span><span>TAKIM</span><span>O</span><span>G/B/M</span><span>A</span><span>P</span></div>
-      ${teams.map((t,i)=>{const info=wcTeams[t.id]||{};const fc=(info.iso2||'').toLowerCase();const nm=escHtml(info.name_en||'?');
-        return `<div class="br-group-row"><span class="br-rank">${i+1}</span><span class="br-team-name">${fc?`<img class="br-flag-sm" src="https://flagcdn.com/w40/${fc}.png" alt="">`:''} ${nm}</span><span style="color:var(--dim);font-size:10px">${t.mp}</span><span style="color:var(--dim);font-size:9px">${t.w}/${t.d}/${t.l}</span><span style="color:var(--dim);font-size:10px">${t.gf}-${t.ga}</span><span class="br-pts">${t.pts}</span></div>`;
+      ${teams.map((t,i)=>{const info=wcTeams[t.id]||{};const nm=escHtml(info.name_en||'?');const fs=getTeamFlagSrc(t.id);
+        return `<div class="br-group-row"><span class="br-rank">${i+1}</span><span class="br-team-name">${fs?`<img class="br-flag-sm" src="${fs}" onerror="this.style.display='none'" alt="">`:''} ${nm}</span><span style="color:var(--dim);font-size:10px">${t.mp}</span><span style="color:var(--dim);font-size:9px">${t.w}/${t.d}/${t.l}</span><span style="color:var(--dim);font-size:10px">${t.gf}-${t.ga}</span><span class="br-pts">${t.pts}</span></div>`;
       }).join('')}</div>`;
   }).join('')}</div>`;
 }
@@ -79,10 +92,10 @@ function brRenderKnockout(body){
     return `<div class="br-knockout-round"><div class="br-round-title">${roundNames[r]||r}</div>
       ${matches.map(g=>{
         const hN=escHtml(getWCName(g.home_team_id)),aN=escHtml(getWCName(g.away_team_id));
-        const hFC=(wcTeams[g.home_team_id]?.iso2||'').toLowerCase(),aFC=(wcTeams[g.away_team_id]?.iso2||'').toLowerCase();
+        const hFS=getTeamFlagSrc(g.home_team_id),aFS=getTeamFlagSrc(g.away_team_id);
         const isLive=wcIsLive(g),isDone=wcIsDone(g);
         const scoreHtml=(isDone||isLive)?`<span class="br-match-score${isLive?' live':''}">${g.home_score??'?'} - ${g.away_score??'?'}</span>`:`<span style="color:var(--dim);font-size:11px">vs</span>`;
-        return `<div class="br-match-card"><div class="br-match-team">${hFC?`<img class="br-flag-sm" src="https://flagcdn.com/w40/${hFC}.png" alt="">`:''}<span>${hN}</span></div>${scoreHtml}<div class="br-match-team away"><span>${aN}</span>${aFC?`<img class="br-flag-sm" src="https://flagcdn.com/w40/${aFC}.png" alt="">`:''}</div></div>`;
+        return `<div class="br-match-card"><div class="br-match-team">${hFS?`<img class="br-flag-sm" src="${hFS}" onerror="this.style.display='none'" alt="">`:''}<span>${hN}</span></div>${scoreHtml}<div class="br-match-team away"><span>${aN}</span>${aFS?`<img class="br-flag-sm" src="${aFS}" onerror="this.style.display='none'" alt="">`:''}</div></div>`;
       }).join('')}</div>`;
   }).join('');
 }
