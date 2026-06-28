@@ -41,7 +41,8 @@ function gkRenderMatchBarFromFixtures(){
 function gkSelectFixture(f){
   const tA=T[f.a]||{name:f.a,fc:f.a};
   const tB=T[f.b]||{name:f.b,fc:f.b};
-  const isLive=S.liveScores&&!!S.liveScores[f.id];
+  const sc=S.liveScores&&S.liveScores[f.id];
+  const isLive=!!sc&&!sc.finished&&!!sc.elapsed;
   cbSetupMatchFromFixture(f,tA,tB,isLive);
   initChat(f.id);
 }
@@ -89,7 +90,8 @@ function cbSetupMatchFromFixture(f,tA,tB,isLive){
   clearInterval(cbCountdownInterval);
   cbUpdateLock(isLive);
   cbCountdownInterval=setInterval(()=>{
-    const live=S.liveScores&&!!S.liveScores[cbMatchId];
+    const sc=S.liveScores&&S.liveScores[cbMatchId];
+    const live=!!sc&&!sc.finished&&!!sc.elapsed;
     cbUpdateLock(live);
   },1000);
 }
@@ -121,6 +123,8 @@ function cbUpdateLock(isLive){
 
 function cbClick(side,e){
   if(!cbMatchId)return;
+  const _sc=S.liveScores&&S.liveScores[cbMatchId];
+  if(!_sc||_sc.finished||!_sc.elapsed)return;
   const btn=e.currentTarget;
   const r=document.createElement('div');r.className='cb-ripple';
   const rect=btn.getBoundingClientRect();
