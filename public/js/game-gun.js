@@ -1,5 +1,17 @@
 'use strict';
 
+// Returns true only when score data indicates the match is genuinely in progress.
+// elapsed="0" (pre-kickoff state some APIs send) must NOT count as live.
+function cbScoreIsLive(sc){
+  if(!sc||sc.finished)return false;
+  const e=sc.elapsed;
+  if(e===null||e===undefined||e==='')return false;
+  const s=String(e);
+  if(s==='HT')return true;
+  const n=parseInt(s);
+  return!isNaN(n)&&n>0;
+}
+
 // ── MATCH BAR FROM FIXTURES ───────────────────────────────────────────────
 function gkRenderMatchBarFromFixtures(){
   const inner=document.getElementById('gk-match-bar-inner');
@@ -41,8 +53,7 @@ function gkRenderMatchBarFromFixtures(){
 function gkSelectFixture(f){
   const tA=T[f.a]||{name:f.a,fc:f.a};
   const tB=T[f.b]||{name:f.b,fc:f.b};
-  const sc=S.liveScores&&S.liveScores[f.id];
-  const isLive=!!sc&&!sc.finished&&!!sc.elapsed;
+  const isLive=cbScoreIsLive(S.liveScores&&S.liveScores[f.id]);
   cbSetupMatchFromFixture(f,tA,tB,isLive);
   initChat(f.id);
 }
@@ -90,9 +101,7 @@ function cbSetupMatchFromFixture(f,tA,tB,isLive){
   clearInterval(cbCountdownInterval);
   cbUpdateLock(isLive);
   cbCountdownInterval=setInterval(()=>{
-    const sc=S.liveScores&&S.liveScores[cbMatchId];
-    const live=!!sc&&!sc.finished&&!!sc.elapsed;
-    cbUpdateLock(live);
+    cbUpdateLock(cbScoreIsLive(S.liveScores&&S.liveScores[cbMatchId]));
   },1000);
 }
 
@@ -123,8 +132,7 @@ function cbUpdateLock(isLive){
 
 function cbClick(side,e){
   if(!cbMatchId)return;
-  const _sc=S.liveScores&&S.liveScores[cbMatchId];
-  if(!_sc||_sc.finished||!_sc.elapsed)return;
+  if(!cbScoreIsLive(S.liveScores&&S.liveScores[cbMatchId]))return;
   const btn=e.currentTarget;
   const r=document.createElement('div');r.className='cb-ripple';
   const rect=btn.getBoundingClientRect();
