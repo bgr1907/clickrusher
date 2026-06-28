@@ -22,7 +22,10 @@ function gkRenderMatchBarFromFixtures(){
     const hCC=(tA&&tA.fc)||f.a||'xx';
     const aCC=(tB&&tB.fc)||f.b||'xx';
     const t=f.utc?new Date(f.utc):(f.ko?new Date(f.ko):null);
-    const gmtTime=t?t.toLocaleTimeString('tr-TR',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'})+' GMT':'—';
+    const _tz=typeof tzOffset!=='undefined'?tzOffset:3;
+    const _tzLabel=`GMT${_tz>=0?'+':''}${_tz}`;
+    const _tzDate=t?new Date(t.getTime()+_tz*3600000):null;
+    const gmtTime=_tzDate?_tzDate.toLocaleTimeString('tr-TR',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'})+' '+_tzLabel:'—';
     const card=document.createElement('div');
     card.className='gk-mbar-card'+(cbMatchId===f.id?' active':'');
     card.innerHTML=`<div class="gk-mbar-flags"><img class="gk-mbar-flag" src="https://flagcdn.com/w40/${hCC}.png" alt=""><span class="gk-mbar-sep">-</span><img class="gk-mbar-flag" src="https://flagcdn.com/w40/${aCC}.png" alt=""></div><div><div class="gk-mbar-time">${gmtTime}</div></div>`;

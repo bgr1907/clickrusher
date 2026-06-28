@@ -178,6 +178,7 @@ document.querySelectorAll('.tz-btn').forEach(btn=>{
     btn.classList.add('active');
     tzOffset=parseInt(btn.dataset.offset);
     updateClock();
+    if(typeof gkRenderMatchBarFromFixtures==='function')gkRenderMatchBarFromFixtures();
   });
 });
 
