@@ -88,14 +88,15 @@ function cbSetupMatchFromFixture(f,tA,tB,isLive){
   cbLoadTotals();
   clearInterval(cbCountdownInterval);
   cbUpdateLock(isLive);
-  if(!isLive&&cbMatchTime&&cbMatchTime>new Date()){
-    cbCountdownInterval=setInterval(()=>cbUpdateLock(false),1000);
-  }
+  cbCountdownInterval=setInterval(()=>{
+    const live=S.liveScores&&!!S.liveScores[cbMatchId];
+    cbUpdateLock(live);
+  },1000);
 }
 
 function cbUpdateLock(isLive){
   const now=new Date();
-  const locked=!isLive&&cbMatchTime&&cbMatchTime>now;
+  const locked=!isLive; // only allow clicks while match is actually live
   const hBtn=document.getElementById('cb-home-btn');
   const aBtn=document.getElementById('cb-away-btn');
   const hLock=document.getElementById('cb-home-lock');
@@ -106,15 +107,14 @@ function cbUpdateLock(isLive){
   if(hLock)hLock.style.display=locked?'':'none';
   if(aLock)aLock.style.display=locked?'':'none';
   if(cdEl){
-    if(isLive){cdEl.textContent='CANLI';cdEl.className='gk-countdown';}
-    else if(locked&&cbMatchTime){
+    if(isLive){cdEl.textContent='CANLI';cdEl.className='gk-countdown live';}
+    else if(cbMatchTime&&cbMatchTime>now){
       const diff=cbMatchTime-now;
       const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
       cdEl.textContent=`⏰ ${h>0?h+'sa ':''} ${m}dk ${s}sn kaldı`;
       cdEl.className='gk-countdown';
-      if(diff<=0){clearInterval(cbCountdownInterval);cbUpdateLock(false);}
     }else{
-      cdEl.textContent='YARIŞMA AKTİF';cdEl.className='gk-countdown';
+      cdEl.textContent='BAŞLIYOR…';cdEl.className='gk-countdown';
     }
   }
 }
