@@ -156,10 +156,9 @@ function rushEnd(){
   const field=document.getElementById('rush-field');if(field)field.querySelectorAll('.rush-target').forEach(el=>el.remove());
   const best=Math.max(rushBestScore(),rushScore);
   localStorage.setItem('CR_RUSH_BEST',String(best));
-  if(S.name&&S.country&&rushScore>0){
-    const n=Math.min(rushScore,500);
-    fetch('/api/clicks',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({device:deviceId,name:S.name,items:[{type:'country',id:S.country,n}],_hp:''})
+  if(S.name&&rushScore>0){
+    fetch('/api/game-end',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({device:deviceId,name:S.name,game:'rush',score:rushScore})
     }).catch(()=>{});
   }
   const endDiv=document.createElement('div');endDiv.className='rush-end-overlay';
@@ -515,10 +514,9 @@ function qScheduleNext(){
   setTimeout(()=>{QQ_CUR++;if(QQ_CUR>=QQ_TOTAL){qShowGameOver([{...QPLAYER,score:QMY_SCORE}]);}else{qShowQuestion();}},3200);
 }
 function qShowGameOver(players){
-  if(S.name&&S.country&&QMY_SCORE>0){
-    const n=Math.min(QMY_SCORE,500);
-    fetch('/api/clicks',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({device:deviceId,name:S.name,items:[{type:'country',id:S.country,n}],_hp:''})
+  if(S.name&&QMY_SCORE>0){
+    fetch('/api/game-end',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({device:deviceId,name:S.name,game:'quiz',score:QMY_SCORE})
     }).catch(()=>{});
   }
   qShowScreen('qover');

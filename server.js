@@ -196,6 +196,42 @@ app.post('/api/clicks', {
   return counters.getUserStats(nick, cleanName);
 });
 
+// Oyun sonu ülke skoru — rush/quiz bitiş puanını country'e ekler
+app.post('/api/game-end', {
+  schema: { body: { type: 'object', required: ['device','name','game','score'],
+    properties: { device:{type:'string'}, name:{type:'string'}, game:{type:'string'}, score:{type:'integer'} } } },
+  attachValidation: true,
+}, async (req, reply) => {
+  if (req.validationError) return reply.code(204).send();
+  const { device, name, game, score } = req.body;
+  if (!DEVICE_RE.test(String(device ?? ''))) return reply.code(204).send();
+  if (!['rush','quiz'].includes(game)) return reply.code(204).send();
+  const safeScore = Math.min(Math.max(Math.floor(score), 1), 20000);
+  const cleanName = sanitizeName(name);
+  if (!cleanName) return reply.code(204).send();
+
+  // Kayıtlı kullanıcı olmalı ve nick eşleşmeli
+  const registeredName = await redis.get(`auth:device:${device}`);
+  if (!registeredName) return reply.code(204).send();
+  if (registeredName.toLowerCase() !== cleanName.toLowerCase()) return reply.code(204).send();
+
+  // Her oyun türü için 50 saniyede bir çağrı izni (minimum oyun süresi)
+  const coolKey = `gameend:${device}:${game}`;
+  const locked  = await redis.get(coolKey);
+  if (locked) return reply.code(204).send();
+  await redis.set(coolKey, '1', 'EX', 50);
+
+  // Kullanıcının seçtiği ülkeyi sunucudan al — client'a güvenme
+  const nick    = cleanName.toLowerCase();
+  const authData = await redis.hgetall(`auth:nick:${nick}`);
+  const country  = authData?.country || '';
+  if (!country) return reply.code(204).send();
+
+  await counters.addCountryClicks(country, nick, cleanName, safeScore);
+  await counters.updateUser(nick, cleanName, safeScore);
+  return { ok: true, country, score: safeScore };
+});
+
 // SSE akışı
 app.get('/api/stream', async (req, reply) => {
   reply.raw.writeHead(200, {
