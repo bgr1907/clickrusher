@@ -112,15 +112,22 @@ window.addEventListener('resize',()=>{const rp=document.getElementById('panel-ru
 
 // ── MODAL ─────────────────────────────────────────────────────────────────
 function openModal(team){
+  const ln=localStorage.getItem('ta26_lang')||'tr';
+  const isEn=ln==='en';
+  const tName=isEn?(team.en||team.name):team.name;
   document.getElementById('m-flag').src=FLAG_BASE+team.fc+'.png';
-  document.getElementById('m-name').textContent=team.name.toUpperCase();
-  document.getElementById('m-grp').textContent=`GRUP ${team.grp} · 2026 FİFA DÜNYA KUPASI`;
+  document.getElementById('m-name').textContent=tName.toUpperCase();
+  document.getElementById('m-grp').textContent=isEn
+    ?`GROUP ${team.grp} · 2026 FIFA WORLD CUP`
+    :`GRUP ${team.grp} · 2026 FİFA DÜNYA KUPASI`;
   const members=TEAMS.filter(x=>x.grp===team.grp).sort((a,b)=>b.pts-a.pts||(b.w-a.w));
-  document.getElementById('m-table').innerHTML=
-    `<tr><th>#</th><th>Ülke</th><th style="text-align:center">G</th><th style="text-align:center">B</th><th style="text-align:center">M</th><th style="text-align:right">P</th></tr>`
+  const hdr=isEn
+    ?`<tr><th>#</th><th>Country</th><th style="text-align:center">W</th><th style="text-align:center">D</th><th style="text-align:center">L</th><th style="text-align:right">Pts</th></tr>`
+    :`<tr><th>#</th><th>Ülke</th><th style="text-align:center">G</th><th style="text-align:center">B</th><th style="text-align:center">M</th><th style="text-align:right">P</th></tr>`;
+  document.getElementById('m-table').innerHTML=hdr
     +members.map((m,i)=>`<tr${m.code===team.code?' class="hl"':''}>
       <td style="color:var(--dim);font-family:'Barlow Condensed',sans-serif">${i+1}</td>
-      <td><img class="st-flag" src="${FLAG_SM}${m.fc}.png" onerror="this.style.display='none'">${m.name}</td>
+      <td><img class="st-flag" src="${FLAG_SM}${m.fc}.png" onerror="this.style.display='none'">${isEn?(m.en||m.name):m.name}</td>
       <td style="text-align:center">${m.w}</td><td style="text-align:center">${m.d}</td>
       <td style="text-align:center">${m.l}</td>
       <td style="text-align:right;font-weight:800;color:var(--cyan);font-family:'Barlow Condensed',sans-serif">${m.pts}</td>
