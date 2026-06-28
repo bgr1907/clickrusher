@@ -3,16 +3,17 @@
 // ── WORLD CUP DATA (for bracket) ─────────────────────────────────────────
 let wcTeams={},wcGames=[];
 
-// Some APIs return names instead of standard ISO2 codes for sub-national teams
-const _NAME_ISO_FIX={'england':'gb-eng','scotland':'gb-sct','wales':'gb-wls','northern ireland':'gb-nir'};
+// Sub-national teams whose iso2 aren't reliably served by flagcdn.com —
+// map their English names to local drawCountryFlag() codes instead.
+const _EN_TO_LOCAL={'england':'ENG','scotland':'SCO','wales':'WAL','northern ireland':'NIR'};
 
 function getTeamFlagSrc(id,size){
   const info=wcTeams[id]||{};
-  let iso=(info.iso2||'').toLowerCase();
-  if(!iso){
-    const n=(info.name_en||'').toLowerCase();
-    iso=_NAME_ISO_FIX[n]||'';
-  }
+  const nameEn=(info.name_en||'').toLowerCase();
+  const localCode=_EN_TO_LOCAL[nameEn];
+  if(localCode&&typeof window.drawCountryFlag==='function')
+    return window.drawCountryFlag(localCode,localCode);
+  const iso=(info.iso2||'').toLowerCase();
   return iso?`https://flagcdn.com/w${size||40}/${iso}.png`:'';
 }
 function getWCFlag(id){return getTeamFlagSrc(id,160);}
