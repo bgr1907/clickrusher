@@ -172,7 +172,7 @@ app.post('/api/clicks', {
       ['country','match'].includes(it.type) &&
       typeof it.id === 'string' && it.id.length >= 2 &&
       Number.isInteger(it.n) && it.n >= 1)
-    .map(it => ({ ...it, n: Math.min(it.n, 10) }));
+    .map(it => ({ ...it, n: Math.min(it.n, it.type === 'country' ? 500 : 10) }));
 
   if (validItems.length === 0) return reply.code(204).send();
 

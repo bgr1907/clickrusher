@@ -157,7 +157,7 @@ function rushEnd(){
   const best=Math.max(rushBestScore(),rushScore);
   localStorage.setItem('CR_RUSH_BEST',String(best));
   if(S.name&&S.country&&rushScore>0){
-    const n=Math.max(1,Math.min(Math.floor(rushScore/100),10));
+    const n=Math.min(rushScore,500);
     fetch('/api/clicks',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({device:deviceId,name:S.name,items:[{type:'country',id:S.country,n}],_hp:''})
     }).catch(()=>{});
@@ -516,7 +516,7 @@ function qScheduleNext(){
 }
 function qShowGameOver(players){
   if(S.name&&S.country&&QMY_SCORE>0){
-    const n=Math.max(1,Math.min(Math.floor(QMY_SCORE/7),10));
+    const n=Math.min(QMY_SCORE,500);
     fetch('/api/clicks',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({device:deviceId,name:S.name,items:[{type:'country',id:S.country,n}],_hp:''})
     }).catch(()=>{});
