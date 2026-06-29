@@ -1,13 +1,13 @@
 'use strict';
 
 // Returns true only when score data indicates the match is genuinely in progress.
-// elapsed="0" (pre-kickoff state some APIs send) must NOT count as live.
+// API returns time_elapsed as "notstarted" | "live" | "finished" (not a minute counter).
 function cbScoreIsLive(sc){
   if(!sc||sc.finished)return false;
   const e=sc.elapsed;
   if(e===null||e===undefined||e==='')return false;
   const s=String(e);
-  if(s==='HT')return true;
+  if(s==='live'||s==='HT')return true;
   const n=parseInt(s);
   return!isNaN(n)&&n>0;
 }
