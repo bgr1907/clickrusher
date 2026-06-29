@@ -113,10 +113,23 @@ function cbUpdateLock(isLive){
   const hLock=document.getElementById('cb-home-lock');
   const aLock=document.getElementById('cb-away-lock');
   const cdEl=document.getElementById('gk-countdown');
+  const vsEl=document.getElementById('gk-vs-text');
+  const scoreEl=document.getElementById('gk-live-score');
   if(hBtn)hBtn.disabled=locked;
   if(aBtn)aBtn.disabled=locked;
   if(hLock)hLock.style.display=locked?'':'none';
   if(aLock)aLock.style.display=locked?'':'none';
+  const sc=S.liveScores&&S.liveScores[cbMatchId];
+  if(scoreEl&&vsEl){
+    if(isLive&&sc){
+      scoreEl.textContent=`${sc.homeScore??0} - ${sc.awayScore??0}`;
+      scoreEl.style.display='';
+      vsEl.style.display='none';
+    }else{
+      scoreEl.style.display='none';
+      vsEl.style.display='';
+    }
+  }
   if(cdEl){
     if(isLive){cdEl.textContent='CANLI';cdEl.className='gk-countdown live';}
     else if(cbMatchTime&&cbMatchTime>now){
