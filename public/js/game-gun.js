@@ -155,7 +155,7 @@ function cbClick(side,e){
   if(wrap){const f=document.createElement('div');f.className='gk-click-flash';wrap.appendChild(f);setTimeout(()=>f.remove(),280);}
   cbCounts[side]++;
   updateCbUI();
-  queueClick('cb',cbMatchId,side==='home'?'A':'B',1);
+  queueClick('match',cbMatchId,side==='home'?'A':'B',1);
 }
 
 function updateCbUI(){
